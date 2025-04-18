@@ -19,7 +19,7 @@ pub type ColumnBasics(column) {
 pub type Column(table) {
   StringColumn(column: table, name: String, basics: ColumnBasics(String))
   IntColumn(column: table, name: String, basics: ColumnBasics(Int))
-  InvalidColumn(column: table, name: String)
+  InvalidColumn(column: table, name: String, basics: ColumnBasics(String))
 }
 
 pub type SQLValue(table) {

@@ -52,7 +52,15 @@ pub fn null(column: Column(column)) -> Column(column) {
       StringColumn(..column, basics: ColumnBasics(..basics, nullable: True))
     IntColumn(_, _, basics) ->
       IntColumn(..column, basics: ColumnBasics(..basics, nullable: True))
-    InvalidColumn(_, _) -> column
+    InvalidColumn(_, _, _) -> column
+  }
+}
+
+pub fn is_nullable(column: Column(column)) -> Bool {
+  case column {
+    StringColumn(_, _, basics) -> basics.nullable
+    IntColumn(_, _, basics) -> basics.nullable
+    InvalidColumn(_, _, _) -> False
   }
 }
 
@@ -64,7 +72,12 @@ pub fn default_string(value: String) -> fn(Column(column)) -> Column(column) {
           ..column,
           basics: ColumnBasics(..basics, default: Some(value)),
         )
-      _ -> InvalidColumn(column.column, column.name)
+      _ ->
+        InvalidColumn(
+          column.column,
+          column.name,
+          ColumnBasics(default: None, nullable: False),
+        )
     }
   }
 }
@@ -73,6 +86,11 @@ pub fn default_int(column: Column(column), value: Int) -> Column(column) {
   case column {
     IntColumn(_, _, basics) ->
       IntColumn(..column, basics: ColumnBasics(..basics, default: Some(value)))
-    _ -> InvalidColumn(column.column, column.name)
+    _ ->
+      InvalidColumn(
+        column.column,
+        column.name,
+        ColumnBasics(default: None, nullable: False),
+      )
   }
 }
