@@ -1,4 +1,5 @@
 import birdie
+import glundrisse/transform
 import pprint
 
 import glundrisse.{column_value as col, int, string}
@@ -53,7 +54,7 @@ pub fn query_test() {
     on: where.equal(col(Customers(Name)), col(Addresses(Street))),
   )
   |> query.where(where.equal(col(Addresses(Street)), string("Majeedhee Magu")))
-  |> cake.transform
+  |> transform.transform(cake.cake_transformer())
   |> pprint.format
   |> birdie.snap(title: "cake1")
 }
