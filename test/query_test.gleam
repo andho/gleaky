@@ -1,9 +1,11 @@
 import birdie
 import pprint
 
+import glundrisse.{column_value as col, int, string}
 import glundrisse/query
 import glundrisse/table
 import glundrisse/table/column
+import glundrisse/where
 
 pub type CustomerColumns {
   Name
@@ -39,10 +41,13 @@ pub fn query_test() {
 
   query.query(table1)
   |> query.select(Customer, [Name, Age])
-  |> query.where_equals_string(Customer(Name), "John")
-  |> query.where_equals_int(Customer(Age), 30)
-  |> query.join(table2, on: #(Customer(Name), Address(Street)))
-  |> query.where_equals_string(Address(Street), "Majeedhee Magu")
+  |> query.where(where.equal(col(Customer(Name)), string("John")))
+  |> query.where(where.equal(col(Customer(Age)), int(30)))
+  |> query.join(
+    table2,
+    on: where.equal(col(Customer(Name)), col(Address(Street))),
+  )
+  |> query.where(where.equal(col(Address(Street)), string("Majeedhee Magu")))
   |> pprint.format
   |> birdie.snap(title: "query1")
 }

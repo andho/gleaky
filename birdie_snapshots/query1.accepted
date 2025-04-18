@@ -64,26 +64,26 @@ Query(
           ),
         ],
       ),
-      #(
+      WhereEquals(
         ColumnValue(Customer(Name)),
-        Equals(ColumnValue(Address(Street))),
+        ColumnValue(Address(Street)),
       ),
       [],
     ),
   ],
-  [
-    #(
+  WhereAnd([
+    WhereEquals(
       ColumnValue(Address(Street)),
-      Equals(StringValue("Majeedhee Magu")),
+      StringValue("Majeedhee Magu"),
     ),
-    #(
-      ColumnValue(Customer(Age)),
-      Equals(IntValue(30)),
-    ),
-    #(
+    WhereEquals(
       ColumnValue(Customer(Name)),
-      Equals(StringValue("John")),
+      StringValue("John"),
     ),
-  ],
-  ValidQuery,
+    WhereEquals(
+      ColumnValue(Customer(Age)),
+      IntValue(30),
+    ),
+  ]),
+  NotChecked,
 )

@@ -21,3 +21,21 @@ pub type Column(table) {
   IntColumn(column: table, name: String, basics: ColumnBasics(Int))
   InvalidColumn(column: table, name: String)
 }
+
+pub type SQLValue(table) {
+  ColumnValue(table)
+  StringValue(String)
+  IntValue(Int)
+}
+
+pub fn string(value: String) -> SQLValue(table) {
+  StringValue(value)
+}
+
+pub fn int(value: Int) -> SQLValue(table) {
+  IntValue(value)
+}
+
+pub fn column_value(column: table) -> SQLValue(table) {
+  ColumnValue(column)
+}

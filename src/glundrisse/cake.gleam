@@ -1,3 +1,4 @@
+import cake/internal/read_query
 import cake/join as j
 import cake/select as s
 import cake/where as w
@@ -5,10 +6,13 @@ import gleam/dict
 import gleam/list
 import gleam/result
 
-import glundrisse.{type Column, type Table}
+import glundrisse.{
+  type Column, type SQLValue, type Table, ColumnValue, IntValue, StringValue,
+}
 import glundrisse/query.{type Query}
 import glundrisse/table
 import glundrisse/table/column
+import glundrisse/where.{type Where, NoWhere}
 
 pub fn transform(q: Query(table)) {
   let sel = s.new()
@@ -26,6 +30,8 @@ pub fn transform(q: Query(table)) {
       |> list.map(fn(column) { #(column.get_column(column), column) })
     })
     |> dict.from_list
+
+  let to_where_val = get_sql_val(table_col_map, cols, _)
 
   let sel =
     s.selects(
@@ -50,57 +56,7 @@ pub fn transform(q: Query(table)) {
     q.joins
     |> list.fold(sel, fn(sel, join) {
       let table_name = table.get_name(join.table)
-      let #(val, cond) = join.on
-      let w_lhs = case val {
-        query.ColumnValue(column) -> {
-          let assert Ok(t) = dict.get(table_col_map, column)
-          let col =
-            dict.get(cols, column)
-            |> result.map(fn(c) { column.get_column_name(c) })
-            |> result.unwrap("Invalid column")
-          w.col(table.get_name(t) <> "." <> col)
-        }
-        _ -> w.col("invalid_table")
-      }
-
-      let w_rhs = case cond {
-        query.Equals(sql_val) -> w.eq(
-          _,
-          get_sql_val(table_col_map, cols, sql_val),
-        )
-        query.NotEquals(sql_val) -> fn(x) {
-          w.not(w.eq(x, get_sql_val(table_col_map, cols, sql_val)))
-        }
-        query.GreaterThan(sql_val) -> w.gt(
-          _,
-          get_sql_val(table_col_map, cols, sql_val),
-        )
-        query.GreaterThanOrEquals(sql_val) -> w.gte(
-          _,
-          get_sql_val(table_col_map, cols, sql_val),
-        )
-        query.LessThan(sql_val) -> w.lt(
-          _,
-          get_sql_val(table_col_map, cols, sql_val),
-        )
-        query.LessThanOrEquals(sql_val) -> w.lte(
-          _,
-          get_sql_val(table_col_map, cols, sql_val),
-        )
-        query.Like(sql_val) -> w.like(_, get_sql_val_string(sql_val))
-        query.NotLike(sql_val) -> fn(x) {
-          w.not(w.like(x, get_sql_val_string(sql_val)))
-        }
-        query.In(sql_val) -> w.in(
-          _,
-          get_sql_val_list(table_col_map, cols, sql_val),
-        )
-        query.NotIn(sql_val) -> fn(x) {
-          w.in(x, get_sql_val_list(table_col_map, cols, sql_val))
-        }
-      }
-
-      let on = w_rhs(w_lhs)
+      let on = where_to_cake_w(join.on, to_where_val)
 
       s.join(sel, j.inner(with: j.table(table_name), on:, alias: table_name))
     })
@@ -111,10 +67,10 @@ pub fn transform(q: Query(table)) {
 fn get_sql_val(
   table_col_map: dict.Dict(table, Table(table)),
   cols: dict.Dict(table, Column(table)),
-  v: query.SQLValue(table),
+  v: SQLValue(table),
 ) {
   case v {
-    query.ColumnValue(column) -> {
+    ColumnValue(column) -> {
       let assert Ok(t) = dict.get(table_col_map, column)
       let col =
         dict.get(cols, column)
@@ -122,23 +78,50 @@ fn get_sql_val(
         |> result.unwrap("Invalid column")
       w.col(table.get_name(t) <> "." <> col)
     }
-    query.StringValue(str_val) -> w.string(str_val)
-    query.IntValue(int_val) -> w.int(int_val)
+    StringValue(str_val) -> w.string(str_val)
+    IntValue(int_val) -> w.int(int_val)
   }
 }
 
-fn get_sql_val_string(v: query.SQLValue(table)) {
+fn get_sql_val_string(v: SQLValue(table)) -> String {
   case v {
-    query.StringValue(str_val) -> str_val
+    StringValue(str_val) -> str_val
     _ -> "Invalid string"
   }
 }
 
 fn get_sql_val_list(
-  table_col_map: dict.Dict(table, Table(table)),
-  cols: dict.Dict(table, Column(table)),
-  v: List(query.SQLValue(table)),
+  to_where_val: fn(SQLValue(table)) -> read_query.WhereValue,
+  v: List(SQLValue(table)),
 ) {
   v
-  |> list.map(get_sql_val(table_col_map, cols, _))
+  |> list.map(to_where_val)
+}
+
+fn where_to_cake_w(
+  where: Where(table),
+  to_where_val: fn(SQLValue(table)) -> read_query.WhereValue,
+) {
+  case where {
+    NoWhere -> w.none()
+    where.WhereAnd(wheres) ->
+      w.and(list.map(wheres, where_to_cake_w(_, to_where_val)))
+    where.WhereOr(wheres) ->
+      w.or(list.map(wheres, where_to_cake_w(_, to_where_val)))
+    where.WhereNot(where) -> w.not(where_to_cake_w(where, to_where_val))
+    where.WhereEquals(value, to_value) ->
+      w.eq(to_where_val(value), to_where_val(to_value))
+    where.WhereGreaterThan(value, to_value) ->
+      w.gt(to_where_val(value), to_where_val(to_value))
+    where.WhereGreaterThanOrEquals(value, to_value) ->
+      w.gte(to_where_val(value), to_where_val(to_value))
+    where.WhereLessThan(value, to_value) ->
+      w.lt(to_where_val(value), to_where_val(to_value))
+    where.WhereLessThanOrEquals(value, to_value) ->
+      w.lte(to_where_val(value), to_where_val(to_value))
+    where.WhereIn(value, values) ->
+      w.in(to_where_val(value), get_sql_val_list(to_where_val, values))
+    where.WhereLike(value, like_value) ->
+      w.like(to_where_val(value), get_sql_val_string(like_value))
+  }
 }

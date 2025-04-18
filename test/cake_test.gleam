@@ -1,10 +1,12 @@
 import birdie
 import pprint
 
+import glundrisse.{column_value as col, int, string}
 import glundrisse/cake
 import glundrisse/query
 import glundrisse/table
 import glundrisse/table/column
+import glundrisse/where
 
 pub type CustomColumns {
   Name
@@ -40,10 +42,17 @@ pub fn query_test() {
 
   query.query(table1)
   |> query.select(Customers, [Name, Age])
-  |> query.where_equals_string(Customers(Name), "John")
-  |> query.where_equals_int(Customers(Age), 30)
-  |> query.join(table2, on: #(Customers(Name), Addresses(Street)))
-  |> query.where_equals_string(Addresses(Street), "Majeedhee Magu")
+  |> query.where(
+    where.and([
+      where.equal(col(Customers(Name)), string("John")),
+      where.equal(col(Customers(Age)), int(30)),
+    ]),
+  )
+  |> query.join(
+    table2,
+    on: where.equal(col(Customers(Name)), col(Addresses(Street))),
+  )
+  |> query.where(where.equal(col(Addresses(Street)), string("Majeedhee Magu")))
   |> cake.transform
   |> pprint.format
   |> birdie.snap(title: "cake1")

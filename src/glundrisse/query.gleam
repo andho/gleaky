@@ -1,15 +1,7 @@
 import gleam/list
-import gleam/string
 
-import glundrisse.{type Table}
-import glundrisse/table
-import glundrisse/table/column
-
-pub type SQLValue(table) {
-  ColumnValue(table)
-  StringValue(String)
-  IntValue(Int)
-}
+import glundrisse.{type SQLValue, type Table}
+import glundrisse/where.{type Where, NoWhere}
 
 pub type SQLCondition(table) {
   Equals(SQLValue(table))
@@ -24,8 +16,22 @@ pub type SQLCondition(table) {
   NotLike(SQLValue(table))
 }
 
+/// Indicates whether a query is valid. Validity is checked based in the data
+/// types of table columns, and if referred columns exist in the scope of the
+/// query.
 pub opaque type ValidQuery {
+  /// The query has not been checked for validity. This is the default while the
+  /// query is being built, as the table definitions are not available to the dsl
+  /// for API simplicity.
+  NotChecked
+  /// The query has been checked for validity and no issues has been found as
+  /// far as the table definitions are concerned. Still, if the underlying data
+  /// does not match the table definitions, chance of runtime errors exist.
   ValidQuery
+  /// The query has been checked for validity and issues have been found. The
+  /// user can choose to ignore issues and execute the query anyway. You can also
+  /// create a module to run for checking if all the queries are valid as a CI
+  /// check.
   InvalidQuery(reason: String)
 }
 
@@ -34,7 +40,7 @@ pub type Query(table) {
     tables: List(Table(table)),
     select: List(table),
     joins: List(Join(table)),
-    where: List(#(SQLValue(table), SQLCondition(table))),
+    where: Where(table),
     invalid: ValidQuery,
   )
 }
@@ -42,13 +48,19 @@ pub type Query(table) {
 pub type Join(table) {
   Join(
     table: Table(table),
-    on: #(SQLValue(table), SQLCondition(table)),
+    on: Where(table),
     and: List(#(SQLValue(table), SQLCondition(table))),
   )
 }
 
 pub fn query(table: Table(table)) -> Query(table) {
-  Query(tables: [table], select: [], joins: [], where: [], invalid: ValidQuery)
+  Query(
+    tables: [table],
+    select: [],
+    joins: [],
+    where: NoWhere,
+    invalid: NotChecked,
+  )
 }
 
 pub fn select(
@@ -59,52 +71,23 @@ pub fn select(
   Query(..query, select: list.append(list.map(columns, from), query.select))
 }
 
-pub fn where_equals_string(
-  query: Query(table),
-  column: table,
-  value: String,
-) -> Query(table) {
-  case
-    list.any(query.tables, fn(table) {
-      list.any(table.get_columns(table), fn(table_column) {
-        column.get_column(table_column) == column
-      })
-    })
-  {
-    True ->
-      Query(..query, where: [
-        #(ColumnValue(column), Equals(StringValue(value))),
-        ..query.where
-      ])
-    False -> {
-      echo "Invalid column"
-      echo column
-      echo "Only the following tables are in the current query scope:"
-      echo list.map(query.tables, fn(table) { table.get_name(table) })
-        |> string.join(", ")
-      Query(..query, invalid: InvalidQuery("Invalid column"))
-    }
-  }
-}
-
-pub fn where_equals_int(
-  query: Query(table),
-  column: table,
-  value: Int,
-) -> Query(table) {
-  Query(..query, where: [
-    #(ColumnValue(column), Equals(IntValue(value))),
-    ..query.where
-  ])
-}
-
 pub fn join(
   query: Query(table),
   table table: Table(table),
-  on on: #(table, table),
+  on on: Where(table),
 ) -> Query(table) {
   Query(..query, tables: [table, ..query.tables], joins: [
-    Join(table:, on: #(ColumnValue(on.0), Equals(ColumnValue(on.1))), and: []),
+    Join(table:, on:, and: []),
     ..query.joins
   ])
+}
+
+pub fn where(query: Query(table), where where: Where(table)) -> Query(table) {
+  case query.where {
+    NoWhere -> Query(..query, where: where)
+    where.WhereAnd(wheres) ->
+      Query(..query, where: where.WhereAnd([where, ..wheres]))
+    current_where ->
+      Query(..query, where: where.WhereAnd([current_where, where]))
+  }
 }
