@@ -1,0 +1,25 @@
+---
+version: 1.2.6
+title: define table 1
+file: ./test/table_test.gleam
+test_name: table1_test
+---
+TableBuilder(
+  //fn(a) { ... },
+  "customers",
+  [
+    IntColumn(
+      Customers(Age),
+      "age",
+      ColumnBasics(None, True),
+    ),
+    StringColumn(
+      Customers(Name),
+      "name",
+      ColumnBasics(
+        Some("John Doe"),
+        False,
+      ),
+    ),
+  ],
+)

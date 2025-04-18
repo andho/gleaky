@@ -1,0 +1,31 @@
+---
+version: 1.2.6
+title: cake1
+---
+Ok(SelectQuery(Select(
+  SelectAll,
+  Selects([
+    SelectColumn("customers.name"),
+    SelectColumn("customers.age"),
+  ]),
+  FromTable("customers"),
+  Joins([
+    InnerJoin(
+      JoinTable("addresses"),
+      "addresses",
+      WhereComparison(
+        WhereColumnValue("customers.name"),
+        Equal,
+        WhereColumnValue("addresses.street"),
+      ),
+    ),
+  ]),
+  NoWhere,
+  NoGroupBy,
+  NoWhere,
+  NoOrderBy,
+  NoLimit,
+  NoOffset,
+  NoEpilog,
+  NoComment,
+)))

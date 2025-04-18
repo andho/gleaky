@@ -1,0 +1,89 @@
+---
+version: 1.2.6
+title: query1
+file: ./test/query_test.gleam
+test_name: query_test
+---
+Query(
+  [
+    Table(
+      "addresses",
+      [
+        StringColumn(
+          Address(Street),
+          "street",
+          ColumnBasics(
+            Some("Majeedhee Magu"),
+            False,
+          ),
+        ),
+        IntColumn(
+          Address(City),
+          "city",
+          ColumnBasics(None, True),
+        ),
+      ],
+    ),
+    Table(
+      "customers",
+      [
+        StringColumn(
+          Customer(Name),
+          "name",
+          ColumnBasics(
+            Some("John Doe"),
+            False,
+          ),
+        ),
+        IntColumn(
+          Customer(Age),
+          "age",
+          ColumnBasics(None, True),
+        ),
+      ],
+    ),
+  ],
+  [Customer(Name), Customer(Age)],
+  [
+    Join(
+      Table(
+        "addresses",
+        [
+          StringColumn(
+            Address(Street),
+            "street",
+            ColumnBasics(
+              Some("Majeedhee Magu"),
+              False,
+            ),
+          ),
+          IntColumn(
+            Address(City),
+            "city",
+            ColumnBasics(None, True),
+          ),
+        ],
+      ),
+      #(
+        ColumnValue(Customer(Name)),
+        Equals(ColumnValue(Address(Street))),
+      ),
+      [],
+    ),
+  ],
+  [
+    #(
+      ColumnValue(Address(Street)),
+      Equals(StringValue("Majeedhee Magu")),
+    ),
+    #(
+      ColumnValue(Customer(Age)),
+      Equals(IntValue(30)),
+    ),
+    #(
+      ColumnValue(Customer(Name)),
+      Equals(StringValue("John")),
+    ),
+  ],
+  ValidQuery,
+)
