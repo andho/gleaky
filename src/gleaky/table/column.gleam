@@ -1,7 +1,7 @@
 import gleam/list
 import gleam/option.{None, Some}
 
-import glundrisse.{
+import gleaky.{
   type Column, type TableBuilder, ColumnBasics, IntColumn, InvalidColumn,
   StringColumn, TableBuilder,
 }

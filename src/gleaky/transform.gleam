@@ -2,13 +2,13 @@ import gleam/dict
 import gleam/list
 import gleam/result
 
-import glundrisse.{
+import gleaky.{
   type Column, type SQLValue, type Table, ColumnValue, IntValue, StringValue,
 }
-import glundrisse/query.{type Query}
-import glundrisse/table
-import glundrisse/table/column
-import glundrisse/where.{type Where}
+import gleaky/query.{type Query}
+import gleaky/table
+import gleaky/table/column
+import gleaky/where.{type Where}
 
 pub type Transformer(table, sel_val, where_val, where, query, join) {
   Transformer(

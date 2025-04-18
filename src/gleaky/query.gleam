@@ -1,7 +1,7 @@
 import gleam/list
 
-import glundrisse.{type SQLValue, type Table}
-import glundrisse/where.{type Where, NoWhere}
+import gleaky.{type SQLValue, type Table}
+import gleaky/where.{type Where, NoWhere}
 
 pub type SQLCondition(table) {
   Equals(SQLValue(table))

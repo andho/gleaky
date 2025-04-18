@@ -1,11 +1,11 @@
 import birdie
 import pprint
 
-import glundrisse.{column_value as col, int, string}
-import glundrisse/query
-import glundrisse/table
-import glundrisse/table/column
-import glundrisse/where
+import gleaky.{column_value as col, int, string}
+import gleaky/query
+import gleaky/table
+import gleaky/table/column
+import gleaky/where
 
 pub type CustomerColumns {
   Name

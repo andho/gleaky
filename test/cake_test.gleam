@@ -1,13 +1,13 @@
 import birdie
-import glundrisse/transform
+import gleaky/transform
 import pprint
 
-import glundrisse.{column_value as col, int, string}
-import glundrisse/cake
-import glundrisse/query
-import glundrisse/table
-import glundrisse/table/column
-import glundrisse/where
+import gleaky.{column_value as col, int, string}
+import gleaky/cake
+import gleaky/query
+import gleaky/table
+import gleaky/table/column
+import gleaky/where
 
 pub type CustomColumns {
   Name

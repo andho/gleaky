@@ -1,4 +1,4 @@
-import glundrisse.{type SQLValue}
+import gleaky.{type SQLValue}
 
 pub type Where(table) {
   NoWhere

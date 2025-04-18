@@ -1,8 +1,8 @@
 import birdie
 import pprint
 
-import glundrisse/table
-import glundrisse/table/column
+import gleaky/table
+import gleaky/table/column
 
 pub type CustomColumns {
   Name

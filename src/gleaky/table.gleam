@@ -1,8 +1,6 @@
 import gleam/list
 
-import glundrisse.{
-  type Column, type Table, type TableBuilder, Table, TableBuilder,
-}
+import gleaky.{type Column, type Table, type TableBuilder, Table, TableBuilder}
 
 pub fn table(
   table: fn(column) -> table,
