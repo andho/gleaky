@@ -3,6 +3,7 @@ import gleam/dict
 import gleam/function
 import gleam/list
 import gleam/option.{type Option, None, Some}
+import gleam/result
 
 import gleaky.{type Column, type Table, IntColumn, InvalidColumn, StringColumn}
 import gleaky/table
@@ -162,6 +163,65 @@ pub fn diff_table(
       constraints: [],
     ),
   )
+}
+
+pub fn merge_ddl(create: CreateTable, queries: List(AlterTable)) {
+  list.fold(queries, create, fn(create, alter) {
+    let #(new_columns, alter_columns, drop_columns) =
+      split_alter_columns(alter.columns)
+
+    let columns =
+      list.append(create.columns, new_columns)
+      |> list.filter(fn(column) {
+        list.contains(drop_columns, column.name)
+        |> bool.negate
+      })
+      |> list.map(fn(column) {
+        {
+          use #(_, alter_column) <- result.try(
+            list.find(alter_columns, fn(alter_column) {
+              alter_column.0 == column.name
+            }),
+          )
+          Ok(alter_column)
+        }
+        |> result.unwrap(column)
+      })
+
+    CreateTable(..create, columns: columns)
+  })
+}
+
+pub fn split_alter_columns(
+  alter_columns: List(DDLAlterColumn),
+) -> #(List(DDLColumn), List(#(String, DDLColumn)), List(String)) {
+  split_alter_column_recursive(alter_columns, #([], [], []))
+}
+
+fn split_alter_column_recursive(
+  alter_columns: List(DDLAlterColumn),
+  split_columns: #(List(DDLColumn), List(#(String, DDLColumn)), List(String)),
+) -> #(List(DDLColumn), List(#(String, DDLColumn)), List(String)) {
+  case alter_columns {
+    [] -> split_columns
+    [AddColumn(column), ..rest] ->
+      split_alter_column_recursive(rest, #(
+        [column, ..split_columns.0],
+        split_columns.1,
+        split_columns.2,
+      ))
+    [AlterColumn(column_name, column), ..rest] ->
+      split_alter_column_recursive(rest, #(
+        split_columns.0,
+        [#(column_name, column), ..split_columns.1],
+        split_columns.2,
+      ))
+    [DropColumn(column), ..rest] ->
+      split_alter_column_recursive(
+        rest,
+        #(split_columns.0, split_columns.1, [column, ..split_columns.2]),
+      )
+  }
 }
 
 fn compare_columns(

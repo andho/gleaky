@@ -1,4 +1,5 @@
 import birdie
+import gleeunit/should
 import pprint
 
 import gleaky/ddl.{create_table}
@@ -19,6 +20,16 @@ pub fn compare_create_with_new_table_version_test() {
   ddl.diff_table(created_table, table3())
   |> pprint.format
   |> birdie.snap(title: "alter table 1")
+}
+
+pub fn make_create_table_from_multiple_ddl_queries_test() {
+  let created_table = create_table(table1())
+
+  let alter_table = should.be_ok(ddl.diff_table(created_table, table3()))
+
+  ddl.merge_ddl(created_table, [alter_table])
+  |> pprint.format
+  |> birdie.snap(title: "make a create table from multiple ddl queries")
 }
 
 pub fn table3() {
