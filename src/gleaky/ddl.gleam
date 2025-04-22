@@ -13,17 +13,17 @@ pub type DataType {
   TypeInt
 }
 
-pub type DQLValue {
-  DQLString(String)
-  DQLInt(Int)
+pub type DDLValue {
+  DDLString(String)
+  DDLInt(Int)
 }
 
-pub type DQLColumn {
-  DQLColumn(
+pub type DDLColumn {
+  DDLColumn(
     name: String,
     data_type: DataType,
     nullable: Bool,
-    default: Option(DQLValue),
+    default: Option(DDLValue),
     collate: CollateClause,
   )
 }
@@ -71,25 +71,37 @@ pub type TableConstraint {
   NoConstraint
 }
 
-pub type DQLQuery {
+pub type CreateTable {
   CreateTable(
     name: String,
-    columns: List(DQLColumn),
+    columns: List(DDLColumn),
     attributes: List(TableAttributes),
     indexes: List(TableIndex),
     constraints: List(TableConstraint),
   )
+}
+
+pub type AlterTable {
   AlterTable(
     name: String,
-    columns: List(DQLAlterColumn),
+    columns: List(DDLAlterColumn),
     attributes: List(TableAttributes),
     indexes: List(TableIndex),
     constraints: List(TableConstraint),
   )
+}
+
+pub type DropTable {
   DropTable(name: String)
 }
 
-pub fn create_table(table: Table(table)) -> DQLQuery {
+pub type DDLQuery {
+  Create(CreateTable)
+  Alter(AlterTable)
+  Drop(DropTable)
+}
+
+pub fn create_table(table: Table(table)) -> CreateTable {
   CreateTable(
     name: table.name,
     columns: list.map(table.columns, column_to_dql_column),
@@ -100,7 +112,7 @@ pub fn create_table(table: Table(table)) -> DQLQuery {
 }
 
 fn column_to_dql_column(column: Column(table)) {
-  DQLColumn(
+  DDLColumn(
     name: column.get_column_name(column),
     data_type: column_to_data_type(column),
     nullable: column.is_nullable(column),
@@ -109,16 +121,16 @@ fn column_to_dql_column(column: Column(table)) {
   )
 }
 
-pub type DQLAlterColumn {
-  AddColumn(DQLColumn)
+pub type DDLAlterColumn {
+  AddColumn(DDLColumn)
   DropColumn(String)
-  AlterColumn(String, DQLColumn)
+  AlterColumn(String, DDLColumn)
 }
 
 pub fn diff_table(
-  created_table: DQLQuery,
+  created_table: CreateTable,
   new_table: Table(table),
-) -> Result(DQLQuery, Nil) {
+) -> Result(AlterTable, Nil) {
   use <- bool.guard(!check_table_name(created_table, new_table), Error(Nil))
 
   let created_columns = get_column_dict(created_table)
@@ -153,9 +165,9 @@ pub fn diff_table(
 }
 
 fn compare_columns(
-  created: DQLColumn,
-  new: DQLColumn,
-) -> Result(DQLAlterColumn, Nil) {
+  created: DDLColumn,
+  new: DDLColumn,
+) -> Result(DDLAlterColumn, Nil) {
   use <- bool.guard(
     list.all(
       [
@@ -172,12 +184,8 @@ fn compare_columns(
 }
 
 /// todo compare collate, constraints, etc
-fn get_column_dict(created_table: DQLQuery) -> dict.Dict(String, DQLColumn) {
-  case created_table {
-    CreateTable(_, columns, _, _, _) ->
-      list.map(columns, fn(column) { #(column.name, column) })
-    _ -> []
-  }
+fn get_column_dict(created_table: CreateTable) -> dict.Dict(String, DDLColumn) {
+  list.map(created_table.columns, fn(column) { #(column.name, column) })
   |> dict.from_list
 }
 
@@ -189,7 +197,7 @@ fn get_new_column_dict(
   |> dict.from_list
 }
 
-fn check_table_name(created_table: DQLQuery, new_table: Table(table)) -> Bool {
+fn check_table_name(created_table: CreateTable, new_table: Table(table)) -> Bool {
   created_table.name == table.get_name(new_table)
 }
 
@@ -201,16 +209,16 @@ fn column_to_data_type(column: Column(table)) -> DataType {
   }
 }
 
-fn column_to_default(column: Column(table)) -> Option(DQLValue) {
+fn column_to_default(column: Column(table)) -> Option(DDLValue) {
   case column {
     StringColumn(_, _, basics) ->
       case basics.default {
-        Some(value) -> Some(DQLString(value))
+        Some(value) -> Some(DDLString(value))
         None -> None
       }
     IntColumn(_, _, basics) ->
       case basics.default {
-        Some(value) -> Some(DQLInt(value))
+        Some(value) -> Some(DDLInt(value))
         None -> None
       }
     InvalidColumn(_, _, _) -> None
