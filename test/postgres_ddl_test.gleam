@@ -10,7 +10,7 @@ import gleaky/postgres as pg
 import gleaky/table
 import gleaky/table/column
 
-import example.{Customer, Gender, Name, table1}
+import example.{Customer, Gender, Name}
 
 pub fn create_table_test() {
   let options = pg.PgOptions(default_collation: pg.EnUsUtf8, schema: "public")
@@ -20,7 +20,7 @@ pub fn create_table_test() {
     [
       DDLColumn(
         "name",
-        TypeString,
+        TypeString(None),
         False,
         Some(DDLString("John Doe")),
         Collate("utf8"),
@@ -47,13 +47,26 @@ pub fn alter_table_test() {
         "name",
         DDLColumn(
           "name",
-          TypeString,
+          TypeString(None),
+          True,
+          Some(DDLString("John Doe")),
+          Collate("utf8"),
+        ),
+        DDLColumn(
+          "name",
+          TypeString(Some(10)),
           False,
           Some(DDLString("Jane Doe")),
           Collate("utf8"),
         ),
       ),
-      AddColumn(DDLColumn("gender", TypeString, False, None, Collate("utf8"))),
+      AddColumn(DDLColumn(
+        "gender",
+        TypeString(None),
+        False,
+        None,
+        Collate("utf8"),
+      )),
     ],
     [],
     [],

@@ -10,7 +10,7 @@ import gleaky/table
 import gleaky/table/column
 
 pub type DataType {
-  TypeString
+  TypeString(Option(Int))
   TypeInt
 }
 
@@ -125,7 +125,7 @@ fn column_to_dql_column(column: Column(table)) {
 pub type DDLAlterColumn {
   AddColumn(DDLColumn)
   DropColumn(String)
-  AlterColumn(String, DDLColumn)
+  AlterColumn(name: String, old: DDLColumn, new: DDLColumn)
 }
 
 pub fn diff_table(
@@ -178,7 +178,7 @@ pub fn merge_ddl(create: CreateTable, queries: List(AlterTable)) {
       })
       |> list.map(fn(column) {
         {
-          use #(_, alter_column) <- result.try(
+          use #(_, _, alter_column) <- result.try(
             list.find(alter_columns, fn(alter_column) {
               alter_column.0 == column.name
             }),
@@ -194,14 +194,18 @@ pub fn merge_ddl(create: CreateTable, queries: List(AlterTable)) {
 
 pub fn split_alter_columns(
   alter_columns: List(DDLAlterColumn),
-) -> #(List(DDLColumn), List(#(String, DDLColumn)), List(String)) {
+) -> #(List(DDLColumn), List(#(String, DDLColumn, DDLColumn)), List(String)) {
   split_alter_column_recursive(alter_columns, #([], [], []))
 }
 
 fn split_alter_column_recursive(
   alter_columns: List(DDLAlterColumn),
-  split_columns: #(List(DDLColumn), List(#(String, DDLColumn)), List(String)),
-) -> #(List(DDLColumn), List(#(String, DDLColumn)), List(String)) {
+  split_columns: #(
+    List(DDLColumn),
+    List(#(String, DDLColumn, DDLColumn)),
+    List(String),
+  ),
+) -> #(List(DDLColumn), List(#(String, DDLColumn, DDLColumn)), List(String)) {
   case alter_columns {
     [] -> split_columns
     [AddColumn(column), ..rest] ->
@@ -210,10 +214,10 @@ fn split_alter_column_recursive(
         split_columns.1,
         split_columns.2,
       ))
-    [AlterColumn(column_name, column), ..rest] ->
+    [AlterColumn(column_name, old_column, new_column), ..rest] ->
       split_alter_column_recursive(rest, #(
         split_columns.0,
-        [#(column_name, column), ..split_columns.1],
+        [#(column_name, old_column, new_column), ..split_columns.1],
         split_columns.2,
       ))
     [DropColumn(column), ..rest] ->
@@ -240,7 +244,7 @@ fn compare_columns(
     return: Error(Nil),
   )
 
-  Ok(AlterColumn(new.name, new))
+  Ok(AlterColumn(new.name, created, new))
 }
 
 /// todo compare collate, constraints, etc
@@ -263,9 +267,9 @@ fn check_table_name(created_table: CreateTable, new_table: Table(table)) -> Bool
 
 fn column_to_data_type(column: Column(table)) -> DataType {
   case column {
-    StringColumn(_, _, _) -> TypeString
+    StringColumn(_, _, _) -> TypeString(None)
     IntColumn(_, _, _) -> TypeInt
-    InvalidColumn(_, _, _) -> TypeString
+    InvalidColumn(_, _, _) -> TypeString(None)
   }
 }
 

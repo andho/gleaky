@@ -12,7 +12,14 @@ Ok(AlterTable(
       "name",
       DdlColumn(
         "name",
-        TypeString,
+        TypeString(None),
+        False,
+        Some(DdlString("John Doe")),
+        Collate("utf8"),
+      ),
+      DdlColumn(
+        "name",
+        TypeString(None),
         False,
         Some(DdlString("Jane Doe")),
         Collate("utf8"),
@@ -20,7 +27,7 @@ Ok(AlterTable(
     ),
     AddColumn(DdlColumn(
       "gender",
-      TypeString,
+      TypeString(None),
       False,
       None,
       Collate("utf8"),

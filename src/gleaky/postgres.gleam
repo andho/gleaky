@@ -1,6 +1,9 @@
-import gleaky/ddl.{type DDLQuery, Alter, Create, Drop}
+import gleam/int
 import gleam/list
+import gleam/option.{type Option, None, Some}
 import gleam/string
+
+import gleaky/ddl.{type DDLQuery, Alter, Create, Drop}
 
 pub type PgCollation {
   Default
@@ -73,24 +76,95 @@ fn transform_ddl_column(
 }
 
 fn transform_ddl_alter_column(
-  column: ddl.DDLColumn,
+  old_column: ddl.DDLColumn,
+  new_column: ddl.DDLColumn,
   options: PgOptions,
-) -> String {
-  transform_alter_data_type(column.data_type, options)
+) -> List(Option(String)) {
+  [
+    transform_alter_data_type(old_column, new_column, options),
+    transform_alter_default(old_column, new_column, options),
+    transform_alter_nullable(old_column, new_column, options),
+  ]
 }
 
-fn transform_data_type(data_type: ddl.DataType, _options: PgOptions) -> String {
-  case data_type {
-    ddl.TypeString -> "varchar"
-    ddl.TypeInt -> "int"
+fn transform_alter_default(
+  old_column: ddl.DDLColumn,
+  new_column: ddl.DDLColumn,
+  _options: PgOptions,
+) -> Option(String) {
+  case old_column.default, new_column.default {
+    Some(old), Some(new) if old == new -> None
+    Some(_), Some(new_default) | None, Some(new_default) ->
+      Some(
+        "ALTER COLUMN "
+        <> new_column.name
+        <> " SET DEFAULT "
+        <> transform_ddl_value(new_default),
+      )
+    Some(_), None -> Some(new_column.name <> " DROP DEFAULT")
+    None, None -> None
+  }
+}
+
+fn transform_alter_nullable(
+  old_column: ddl.DDLColumn,
+  new_column: ddl.DDLColumn,
+  _options: PgOptions,
+) -> Option(String) {
+  case old_column.nullable, new_column.nullable {
+    True, True | False, False -> None
+    _, _ ->
+      Some(
+        "ALTER COLUMN "
+        <> new_column.name
+        <> {
+          case new_column.nullable {
+            True -> " SET"
+            False -> " DROP"
+          }
+        }
+        <> " NOT NULL",
+      )
   }
 }
 
 fn transform_alter_data_type(
-  data_type: ddl.DataType,
+  old_column: ddl.DDLColumn,
+  new_column: ddl.DDLColumn,
   options: PgOptions,
-) -> String {
-  "TYPE " <> transform_data_type(data_type, options)
+) -> Option(String) {
+  case did_data_type_change(old_column, new_column) {
+    True ->
+      Some(
+        "ALTER COLUMN "
+        <> new_column.name
+        <> " TYPE "
+        <> transform_data_type(new_column.data_type, options),
+      )
+    _ -> None
+  }
+}
+
+fn did_data_type_change(
+  old_column: ddl.DDLColumn,
+  new_column: ddl.DDLColumn,
+) -> Bool {
+  old_column.data_type != new_column.data_type
+}
+
+fn transform_ddl_value(value: ddl.DDLValue) -> String {
+  case value {
+    ddl.DDLString(value) -> "'" <> value <> "'"
+    ddl.DDLInt(value) -> int.to_string(value)
+  }
+}
+
+fn transform_data_type(data_type: ddl.DataType, _options: PgOptions) -> String {
+  case data_type {
+    ddl.TypeString(None) -> "varchar"
+    ddl.TypeString(Some(length)) -> "varchar(" <> int.to_string(length) <> ")"
+    ddl.TypeInt -> "int"
+  }
 }
 
 fn transform_ddl_alter_columns(
@@ -102,11 +176,10 @@ fn transform_ddl_alter_columns(
     <> case column {
       ddl.AddColumn(column) ->
         "ADD " <> transform_ddl_column(column, "", options)
-      ddl.AlterColumn(column_name, column) ->
-        "ALTER COLUMN "
-        <> column_name
-        <> " "
-        <> transform_ddl_alter_column(column, options)
+      ddl.AlterColumn(_, old_column, new_column) ->
+        transform_ddl_alter_column(old_column, new_column, options)
+        |> list.filter_map(fn(option) { option.to_result(option, Nil) })
+        |> string.join(",\n" <> indent())
       ddl.DropColumn(column_name) -> "DROP COLUMN " <> column_name
     }
   })

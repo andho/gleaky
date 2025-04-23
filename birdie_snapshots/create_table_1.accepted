@@ -9,7 +9,7 @@ CreateTable(
   [
     DdlColumn(
       "name",
-      TypeString,
+      TypeString(None),
       False,
       Some(DdlString("John Doe")),
       Collate("utf8"),
