@@ -1,6 +1,8 @@
 ---
 version: 1.2.6
 title: make a create table from multiple ddl queries
+file: ./test/ddl_test.gleam
+test_name: make_create_table_from_multiple_ddl_queries_test
 ---
 CreateTable(
   "customers",
