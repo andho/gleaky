@@ -1,0 +1,10 @@
+---
+version: 1.2.6
+title: alter table transform to postgres alter table
+file: ./test/postgres_ddl_test.gleam
+test_name: alter_table_test
+---
+"ALTER TABLE public.customers
+	DROP COLUMN age,
+	ALTER COLUMN name TYPE varchar,
+	ADD gender varchar NOT NULL;"
