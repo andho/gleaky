@@ -5,7 +5,7 @@ import gleam/list
 import gleam/option.{type Option, None, Some}
 import gleam/result
 
-import gleaky.{type Column, type Table, IntColumn, InvalidColumn, StringColumn}
+import gleaky.{type Column, type Table}
 import gleaky/table
 import gleaky/table/column
 
@@ -14,19 +14,62 @@ pub type DataType {
   TypeInt
 }
 
-pub type DDLValue {
-  DDLString(String)
-  DDLInt(Int)
-}
-
 pub type DDLColumn {
   DDLColumn(
     name: String,
     data_type: DataType,
-    nullable: Bool,
-    default: Option(DDLValue),
     collate: CollateClause,
+    constraints: ColumnConstraint,
   )
+}
+
+pub type ColumnConstraint {
+  ColumnConstraint(
+    nullable: gleaky.Nullable,
+    foreign_key: gleaky.ForeignKey(String),
+    default: gleaky.Default,
+  )
+}
+
+pub type DDLForeignKey {
+  ForeignKey(columns: List(String), on_delete: OnDelete, on_update: OnUpdate)
+  NoForeignKey
+}
+
+/// Cascade rules are specified for `OnDelete` and `OnUpdate` clauses for foreign
+/// key / references.
+pub type CascadeRule {
+  /// Deletes the related rows
+  Cascade
+  /// Restricts the deletion of the row if the constraint is violated upon
+  /// deletion.
+  Restrict
+  /// Set the related foreign key fields to null. You can specify a subset of
+  /// the fields to be set to null.
+  ///
+  /// SQL equivalent:
+  /// ```
+  /// SET NULL (author_id)
+  /// ```
+  SetNull(List(String))
+  /// Set the related foreign key fields to their default value. You can specify a subset of
+  /// the fields to be set to defaults.
+  ///
+  /// SQL equivalent:
+  /// ```
+  /// SET DEFAULT (author_id)
+  /// ```
+  SetDefault(List(String))
+}
+
+pub type OnDelete {
+  OnDelete(CascadeRule)
+  NoOnDelete
+}
+
+pub type OnUpdate {
+  OnUpdate(CascadeRule)
+  NoOnUpdate
 }
 
 pub type CollateClause {
@@ -42,12 +85,6 @@ pub type UniqueSpecification {
 pub type CheckConstraint {
   /// todo
   CheckConstraint
-}
-
-pub type ColumnConstraint {
-  NotNull
-  Unique(UniqueSpecification)
-  Check(CheckConstraint)
 }
 
 pub type ConstraintAttribute {
@@ -105,20 +142,19 @@ pub type DDLQuery {
 pub fn create_table(table: Table(table)) -> CreateTable {
   CreateTable(
     name: table.name,
-    columns: list.map(table.columns, column_to_dql_column),
+    columns: list.map(table.columns, column_to_dql_column(table, _)),
     attributes: [],
     indexes: [],
     constraints: [],
   )
 }
 
-fn column_to_dql_column(column: Column(table)) {
+fn column_to_dql_column(table: Table(table), column: Column(table)) {
   DDLColumn(
     name: column.get_column_name(column),
     data_type: column_to_data_type(column),
-    nullable: column.is_nullable(column),
-    default: column_to_default(column),
     collate: Collate("utf8"),
+    constraints: column_to_constraints(table, column),
   )
 }
 
@@ -147,8 +183,8 @@ pub fn diff_table(
 
       case created_column, new_column {
         Ok(created), Ok(new) ->
-          compare_columns(created, column_to_dql_column(new))
-        Error(_), Ok(new) -> Ok(AddColumn(column_to_dql_column(new)))
+          compare_columns(created, column_to_dql_column(new_table, new))
+        Error(_), Ok(new) -> Ok(AddColumn(column_to_dql_column(new_table, new)))
         Ok(created), Error(_) -> Ok(DropColumn(created.name))
         Error(_), Error(_) -> Error(Nil)
       }
@@ -233,14 +269,7 @@ fn compare_columns(
   new: DDLColumn,
 ) -> Result(DDLAlterColumn, Nil) {
   use <- bool.guard(
-    list.all(
-      [
-        created.data_type == new.data_type,
-        created.nullable == new.nullable,
-        created.default == new.default,
-      ],
-      function.identity,
-    ),
+    created.data_type == new.data_type && created.constraints == new.constraints,
     return: Error(Nil),
   )
 
@@ -267,24 +296,77 @@ fn check_table_name(created_table: CreateTable, new_table: Table(table)) -> Bool
 
 fn column_to_data_type(column: Column(table)) -> DataType {
   case column {
-    StringColumn(_, _, _) -> TypeString(None)
-    IntColumn(_, _, _) -> TypeInt
-    InvalidColumn(_, _, _) -> TypeString(None)
+    gleaky.StringColumn(_, _, _) -> TypeString(None)
+    gleaky.IntColumn(_, _, _) -> TypeInt
+    gleaky.InvalidColumn(_, _, _) -> TypeString(None)
   }
 }
 
-fn column_to_default(column: Column(table)) -> Option(DDLValue) {
-  case column {
-    StringColumn(_, _, basics) ->
-      case basics.default {
-        Some(value) -> Some(DDLString(value))
-        None -> None
-      }
-    IntColumn(_, _, basics) ->
-      case basics.default {
-        Some(value) -> Some(DDLInt(value))
-        None -> None
-      }
-    InvalidColumn(_, _, _) -> None
+fn column_to_constraints(
+  table: Table(table),
+  column: Column(table),
+) -> ColumnConstraint {
+  let foreign_key = case column.constraints.foreign_key {
+    gleaky.ForeignKey(columns, on_delete, on_update) ->
+      gleaky.ForeignKey(
+        columns: columns_to_string(table, columns),
+        on_delete: on_delete_to_ddl(table, on_delete),
+        on_update: on_update_to_ddl(table, on_update),
+      )
+    gleaky.NoForeignKey -> gleaky.NoForeignKey
+  }
+  ColumnConstraint(
+    nullable: column.constraints.nullable,
+    foreign_key:,
+    default: column.constraints.default,
+  )
+}
+
+fn columns_to_string(table: Table(table), columns: List(table)) -> List(String) {
+  let cols =
+    table.get_columns(table)
+    |> list.map(fn(column) { #(column.get_column(column), column) })
+    |> dict.from_list
+  list.map(columns, fn(fq_col_name) {
+    use column <- result.try(dict.get(cols, fq_col_name))
+
+    Ok(column.get_column_name(column))
+  })
+  |> result.all
+  |> result.unwrap([])
+}
+
+fn cascade_rule_to_ddl(
+  table: Table(table),
+  cascade_rule: gleaky.CascadeRule(table),
+) -> gleaky.CascadeRule(String) {
+  case cascade_rule {
+    gleaky.SetNull(columns) -> gleaky.SetNull(columns_to_string(table, columns))
+    gleaky.SetDefault(columns) ->
+      gleaky.SetDefault(columns_to_string(table, columns))
+    gleaky.Cascade -> gleaky.Cascade
+    gleaky.Restrict -> gleaky.Restrict
+  }
+}
+
+fn on_delete_to_ddl(
+  table: Table(table),
+  on_delete: gleaky.OnDelete(table),
+) -> gleaky.OnDelete(String) {
+  case on_delete {
+    gleaky.OnDelete(cascade_rule) ->
+      gleaky.OnDelete(cascade_rule_to_ddl(table, cascade_rule))
+    gleaky.NoOnDelete -> gleaky.NoOnDelete
+  }
+}
+
+fn on_update_to_ddl(
+  table: Table(table),
+  on_update: gleaky.OnUpdate(table),
+) -> gleaky.OnUpdate(String) {
+  case on_update {
+    gleaky.OnUpdate(cascade_rule) ->
+      gleaky.OnUpdate(cascade_rule_to_ddl(table, cascade_rule))
+    gleaky.NoOnUpdate -> gleaky.NoOnUpdate
   }
 }

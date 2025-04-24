@@ -3,7 +3,8 @@ import gleam/list
 import gleam/result
 
 import gleaky.{
-  type Column, type SQLValue, type Table, ColumnValue, IntValue, StringValue,
+  type Column, type SQLScalarValue, type SQLValue, type Table, ColumnValue,
+  IntValue, ScalarValue, StringValue,
 }
 import gleaky/query.{type Query}
 import gleaky/table
@@ -127,9 +128,7 @@ fn transform_where(
     }
     where.WhereLike(value, like_value) ->
       get_sql_val(value)
-      |> result.map(fn(val) {
-        transformer.like(val, get_sql_val_string(like_value))
-      })
+      |> result.map(fn(val) { transformer.like(val, like_value) })
     where.WhereNot(w) ->
       w
       |> transform_where(get_sql_val, transformer)
@@ -171,14 +170,16 @@ fn get_sql_val_(
       get_column_name(column)
       |> result.map(transformer.where_column)
     }
-    StringValue(str_val) -> Ok(transformer.to_string(str_val))
-    IntValue(int_val) -> Ok(transformer.to_int(int_val))
+    ScalarValue(scalar_val) -> get_scalar_val(scalar_val, transformer)
   }
 }
 
-fn get_sql_val_string(v: SQLValue(table)) -> String {
-  case v {
-    StringValue(str_val) -> str_val
-    _ -> "Invalid string"
+fn get_scalar_val(
+  scalar_val: SQLScalarValue,
+  transformer: Transformer(ttable, sel_val, where_val, where, query, join),
+) -> Result(where_val, Nil) {
+  case scalar_val {
+    StringValue(str_val) -> Ok(transformer.to_string(str_val))
+    IntValue(int_val) -> Ok(transformer.to_int(int_val))
   }
 }

@@ -12,15 +12,20 @@ Query(
         StringColumn(
           Address(Street),
           "street",
-          ColumnBasics(
-            Some("Majeedhee Magu"),
-            False,
+          ColumnConstraint(
+            NotNull,
+            NoForeignKey,
+            Default(StringValue("Majeedhee Magu")),
           ),
         ),
         IntColumn(
           Address(City),
           "city",
-          ColumnBasics(None, True),
+          ColumnConstraint(
+            Null,
+            NoForeignKey,
+            NoDefault,
+          ),
         ),
       ],
     ),
@@ -30,15 +35,20 @@ Query(
         StringColumn(
           Customer(Name),
           "name",
-          ColumnBasics(
-            Some("John Doe"),
-            False,
+          ColumnConstraint(
+            NotNull,
+            NoForeignKey,
+            Default(StringValue("John Doe")),
           ),
         ),
         IntColumn(
           Customer(Age),
           "age",
-          ColumnBasics(None, True),
+          ColumnConstraint(
+            Null,
+            NoForeignKey,
+            NoDefault,
+          ),
         ),
       ],
     ),
@@ -52,15 +62,20 @@ Query(
           StringColumn(
             Address(Street),
             "street",
-            ColumnBasics(
-              Some("Majeedhee Magu"),
-              False,
+            ColumnConstraint(
+              NotNull,
+              NoForeignKey,
+              Default(StringValue("Majeedhee Magu")),
             ),
           ),
           IntColumn(
             Address(City),
             "city",
-            ColumnBasics(None, True),
+            ColumnConstraint(
+              Null,
+              NoForeignKey,
+              NoDefault,
+            ),
           ),
         ],
       ),
@@ -74,15 +89,15 @@ Query(
   WhereAnd([
     WhereEquals(
       ColumnValue(Address(Street)),
-      StringValue("Majeedhee Magu"),
+      ScalarValue(StringValue("Majeedhee Magu")),
     ),
     WhereEquals(
       ColumnValue(Customer(Name)),
-      StringValue("John"),
+      ScalarValue(StringValue("John")),
     ),
     WhereEquals(
       ColumnValue(Customer(Age)),
-      IntValue(30),
+      ScalarValue(IntValue(30)),
     ),
   ]),
   NotChecked,

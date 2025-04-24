@@ -63,7 +63,7 @@ pub fn query_test() {
 }
 ```
 
-## Supported SQL Query features
+## Supported SELECT SQL Query features
 
 Following features are supported (*or planned to be supported):
 
@@ -99,3 +99,20 @@ Following features are not planned:
 - Aggregates
 - Arithmetic expressions
 - Functions
+
+## Supported DDL
+
+- [ ] Foreign key (table and column)
+  - [ ] On delete and On Update
+    - [ ] Cascade
+    - [ ] Restrict
+    - [ ] Set null with a subset of columns
+    - [ ] Set default with a subset of columns
+- [ ] Not Null
+- [ ] Unique (table and column) (nulls not distinct is set on supported systems)
+- [ ] Primary key (table and column)
+
+## Currently not supported
+
+- Check constraints
+- Exclusion constraints

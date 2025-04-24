@@ -11,14 +11,19 @@ TableBuilder(
     IntColumn(
       Customers(Age),
       "age",
-      ColumnBasics(None, True),
+      ColumnConstraint(
+        Null,
+        NoForeignKey,
+        NoDefault,
+      ),
     ),
     StringColumn(
       Customers(Name),
       "name",
-      ColumnBasics(
-        Some("John Doe"),
-        False,
+      ColumnConstraint(
+        NotNull,
+        NoForeignKey,
+        Default(StringValue("John Doe")),
       ),
     ),
   ],

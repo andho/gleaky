@@ -11,7 +11,7 @@ pub type Where(table) {
   WhereLessThan(SQLValue(table), SQLValue(table))
   WhereLessThanOrEquals(SQLValue(table), SQLValue(table))
   WhereIn(SQLValue(table), List(SQLValue(table)))
-  WhereLike(SQLValue(table), SQLValue(table))
+  WhereLike(SQLValue(table), String)
 }
 
 pub fn equal(
@@ -57,10 +57,7 @@ pub fn in(value: SQLValue(table), values: List(SQLValue(table))) -> Where(table)
   WhereIn(value, values)
 }
 
-pub fn like(
-  value: SQLValue(table),
-  like like_value: SQLValue(table),
-) -> Where(table) {
+pub fn like(value: SQLValue(table), like like_value: String) -> Where(table) {
   WhereLike(value, like_value)
 }
 

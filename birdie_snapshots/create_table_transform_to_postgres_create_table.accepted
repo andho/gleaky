@@ -5,6 +5,7 @@ file: ./test/postgres_ddl_test.gleam
 test_name: create_table_test
 ---
 "CREATE TABLE public.customers (
+	id int NOT NULL,
 	name varchar NOT NULL,
 	age int NULL
 );"

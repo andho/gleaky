@@ -6,7 +6,6 @@ test_name: alter_table_test
 ---
 "ALTER TABLE public.customers
 	DROP COLUMN age,
-	ALTER COLUMN name TYPE varchar(10),
 	ALTER COLUMN name SET DEFAULT 'Jane Doe',
 	ALTER COLUMN name DROP NOT NULL,
 	ADD gender varchar NOT NULL;"

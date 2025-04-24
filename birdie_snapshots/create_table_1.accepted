@@ -8,18 +8,34 @@ CreateTable(
   "customers",
   [
     DdlColumn(
+      "id",
+      TypeInt,
+      Collate("utf8"),
+      ColumnConstraint(
+        NotNull,
+        NoForeignKey,
+        NoDefault,
+      ),
+    ),
+    DdlColumn(
       "name",
       TypeString(None),
-      False,
-      Some(DdlString("John Doe")),
       Collate("utf8"),
+      ColumnConstraint(
+        NotNull,
+        NoForeignKey,
+        Default(StringValue("John Doe")),
+      ),
     ),
     DdlColumn(
       "age",
       TypeInt,
-      True,
-      None,
       Collate("utf8"),
+      ColumnConstraint(
+        Null,
+        NoForeignKey,
+        NoDefault,
+      ),
     ),
   ],
   [],

@@ -3,6 +3,7 @@ import gleam/list
 import gleam/option.{type Option, None, Some}
 import gleam/string
 
+import gleaky
 import gleaky/ddl.{type DDLQuery, Alter, Create, Drop}
 
 pub type PgCollation {
@@ -67,9 +68,9 @@ fn transform_ddl_column(
   <> column.name
   |> string.append(" ")
   |> string.append(transform_data_type(column.data_type, options))
-  |> string.append(case column.nullable {
-    True -> " NULL"
-    False -> " NOT NULL"
+  |> string.append(case column.constraints.nullable {
+    gleaky.Null -> " NULL"
+    gleaky.NotNull -> " NOT NULL"
   })
   |> string.append("")
   |> string.append("")
@@ -92,17 +93,20 @@ fn transform_alter_default(
   new_column: ddl.DDLColumn,
   _options: PgOptions,
 ) -> Option(String) {
-  case old_column.default, new_column.default {
-    Some(old), Some(new) if old == new -> None
-    Some(_), Some(new_default) | None, Some(new_default) ->
+  case old_column.constraints.default, new_column.constraints.default {
+    gleaky.Default(old), gleaky.Default(new) if old == new -> None
+    gleaky.Default(_), gleaky.Default(new_default)
+    | gleaky.NoDefault, gleaky.Default(new_default)
+    ->
       Some(
         "ALTER COLUMN "
         <> new_column.name
         <> " SET DEFAULT "
         <> transform_ddl_value(new_default),
       )
-    Some(_), None -> Some(new_column.name <> " DROP DEFAULT")
-    None, None -> None
+    gleaky.Default(_), gleaky.NoDefault ->
+      Some(new_column.name <> " DROP DEFAULT")
+    gleaky.NoDefault, gleaky.NoDefault -> None
   }
 }
 
@@ -111,16 +115,16 @@ fn transform_alter_nullable(
   new_column: ddl.DDLColumn,
   _options: PgOptions,
 ) -> Option(String) {
-  case old_column.nullable, new_column.nullable {
-    True, True | False, False -> None
+  case old_column.constraints.nullable, new_column.constraints.nullable {
+    gleaky.Null, gleaky.Null | gleaky.NotNull, gleaky.NotNull -> None
     _, _ ->
       Some(
         "ALTER COLUMN "
         <> new_column.name
         <> {
-          case new_column.nullable {
-            True -> " SET"
-            False -> " DROP"
+          case new_column.constraints.nullable {
+            gleaky.NotNull -> " SET"
+            gleaky.Null -> " DROP"
           }
         }
         <> " NOT NULL",
@@ -152,10 +156,10 @@ fn did_data_type_change(
   old_column.data_type != new_column.data_type
 }
 
-fn transform_ddl_value(value: ddl.DDLValue) -> String {
+fn transform_ddl_value(value: gleaky.SQLScalarValue) -> String {
   case value {
-    ddl.DDLString(value) -> "'" <> value <> "'"
-    ddl.DDLInt(value) -> int.to_string(value)
+    gleaky.StringValue(value) -> "'" <> value <> "'"
+    gleaky.IntValue(value) -> int.to_string(value)
   }
 }
 
