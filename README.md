@@ -1,5 +1,7 @@
 # gleaky
 
+<sup>experimental, pre-alpha, API very unstable</sup>
+
 This is a gleam library for defining RDBMS table structure and build queries for
 those tables. Actually executing the queries is not part of this library, but
 currently a transformer for [cake](https://github.com/inoas/gleam-cake) is
