@@ -2,6 +2,7 @@ import birdie
 import gleeunit/should
 import pprint
 
+import gleaky
 import gleaky/ddl.{create_schema, create_table}
 import gleaky/table
 import gleaky/table/column

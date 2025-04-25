@@ -26,6 +26,7 @@ pub fn table1_test() {
     column.default_string("John Doe"),
   ])
   |> column.int(Age, name: "age", attributes: [column.null])
+  |> table.create
   |> pprint.format
   |> birdie.snap(title: "define table 1")
 }

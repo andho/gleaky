@@ -14,6 +14,7 @@ Table(
         NotNull,
         NoForeignKey,
         NoDefault,
+        PrimaryKey,
       ),
     ),
     StringColumn(
@@ -23,6 +24,7 @@ Table(
         NotNull,
         NoForeignKey,
         Default(StringValue("Majeedhee Magu")),
+        NotPrimaryKey,
       ),
     ),
     IntColumn(
@@ -32,6 +34,7 @@ Table(
         Null,
         NoForeignKey,
         NoDefault,
+        NotPrimaryKey,
       ),
     ),
     IntColumn(
@@ -41,10 +44,11 @@ Table(
         NotNull,
         ForeignKey(
           [Customer(CustomerId)],
-          OnDelete(Cascade),
+          OnDelete(Restrict),
           OnUpdate(Cascade),
         ),
         NoDefault,
+        NotPrimaryKey,
       ),
     ),
   ],

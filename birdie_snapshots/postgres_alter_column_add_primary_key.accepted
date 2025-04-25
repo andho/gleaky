@@ -1,0 +1,12 @@
+---
+version: 1.2.6
+title: postgres alter column add primary key
+file: ./test/postgres_ddl_test.gleam
+test_name: add_column_primary_key_test
+---
+[
+  None,
+  None,
+  None,
+  Some("ADD CONSTRAINT pkey PRIMARY KEY"),
+]

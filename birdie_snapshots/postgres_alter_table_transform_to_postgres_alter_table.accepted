@@ -1,6 +1,6 @@
 ---
 version: 1.2.6
-title: alter table transform to postgres alter table
+title: postgres alter table transform to postgres alter table
 file: ./test/postgres_ddl_test.gleam
 test_name: alter_table_test
 ---

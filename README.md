@@ -102,15 +102,17 @@ Following features are not planned:
 
 ## Supported DDL
 
-- [ ] Foreign key (table and column)
-  - [ ] On delete and On Update
-    - [ ] Cascade
-    - [ ] Restrict
-    - [ ] Set null with a subset of columns
-    - [ ] Set default with a subset of columns
-- [ ] Not Null
-- [ ] Unique (table and column) (nulls not distinct is set on supported systems)
-- [ ] Primary key (table and column)
+- [x] Foreign key (table and column)
+  - [x] On delete and On Update
+    - [x] Cascade
+    - [x] Restrict
+    - [x] Set null with a subset of columns
+    - [x] Set default with a subset of columns
+- [x] Not Null
+- [ ] Unique (column) (nulls not distinct is set on supported systems)
+- [ ] Unique (table) (nulls not distinct is set on supported systems)
+- [x] Primary key (column)
+- [ ] Primary key (table)
 
 ## Currently not supported
 

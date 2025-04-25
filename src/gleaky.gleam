@@ -42,7 +42,14 @@ pub type ColumnConstraint(table) {
     nullable: Nullable,
     foreign_key: ForeignKey(table),
     default: Default,
+    primary_key: PrimaryKey,
   )
+}
+
+/// Primary key index parameters are not supported yet
+pub type PrimaryKey {
+  PrimaryKey
+  NotPrimaryKey
 }
 
 pub type Nullable {

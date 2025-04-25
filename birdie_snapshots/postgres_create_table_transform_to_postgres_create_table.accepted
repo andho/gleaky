@@ -1,6 +1,6 @@
 ---
 version: 1.2.6
-title: create table transform to postgres create table
+title: postgres create table transform to postgres create table
 file: ./test/postgres_ddl_test.gleam
 test_name: create_table_test
 ---

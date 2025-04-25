@@ -15,6 +15,7 @@ CreateTable(
         NotNull,
         NoForeignKey,
         NoDefault,
+        PrimaryKey,
       ),
     ),
     DdlColumn(
@@ -25,6 +26,7 @@ CreateTable(
         NotNull,
         NoForeignKey,
         Default(StringValue("Majeedhee Magu")),
+        NotPrimaryKey,
       ),
     ),
     DdlColumn(
@@ -35,6 +37,7 @@ CreateTable(
         Null,
         NoForeignKey,
         NoDefault,
+        NotPrimaryKey,
       ),
     ),
     DdlColumn(
@@ -46,10 +49,11 @@ CreateTable(
         ForeignKey(
           "customers",
           ["id"],
-          OnDelete(Cascade),
+          OnDelete(Restrict),
           OnUpdate(Cascade),
         ),
         NoDefault,
+        NotPrimaryKey,
       ),
     ),
   ],

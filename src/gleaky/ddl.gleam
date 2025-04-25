@@ -28,6 +28,7 @@ pub type ColumnConstraint {
     nullable: gleaky.Nullable,
     foreign_key: DDLForeignKey,
     default: gleaky.Default,
+    primary_key: gleaky.PrimaryKey,
   )
 }
 
@@ -385,6 +386,7 @@ fn column_to_constraints(
     nullable: column.constraints.nullable,
     foreign_key:,
     default: column.constraints.default,
+    primary_key: column.constraints.primary_key,
   )
 }
 

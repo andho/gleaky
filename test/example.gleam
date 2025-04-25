@@ -39,7 +39,7 @@ pub fn table2() {
   ])
   |> column.int(City, name: "city", attributes: [column.null])
   |> column.int(AddressCustomer, name: "customer_id", attributes: [
-    column.references(Customer(CustomerId)),
+    column.references(Customer(CustomerId)) |> column.on_delete(gleaky.Restrict),
   ])
   |> table.create
 }

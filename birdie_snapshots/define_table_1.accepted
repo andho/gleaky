@@ -4,19 +4,9 @@ title: define table 1
 file: ./test/table_test.gleam
 test_name: table1_test
 ---
-TableBuilder(
-  //fn(a) { ... },
+Table(
   "customers",
   [
-    IntColumn(
-      Customers(Age),
-      "age",
-      ColumnConstraint(
-        Null,
-        NoForeignKey,
-        NoDefault,
-      ),
-    ),
     StringColumn(
       Customers(Name),
       "name",
@@ -24,6 +14,17 @@ TableBuilder(
         NotNull,
         NoForeignKey,
         Default(StringValue("John Doe")),
+        NotPrimaryKey,
+      ),
+    ),
+    IntColumn(
+      Customers(Age),
+      "age",
+      ColumnConstraint(
+        Null,
+        NoForeignKey,
+        NoDefault,
+        NotPrimaryKey,
       ),
     ),
   ],

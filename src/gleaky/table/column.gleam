@@ -3,8 +3,8 @@ import gleam/result
 
 import gleaky.{
   type Column, type TableBuilder, ColumnConstraint, Default, IntColumn, IntValue,
-  InvalidColumn, NoDefault, NoForeignKey, NotNull, Null, StringColumn,
-  StringValue, TableBuilder,
+  InvalidColumn, NoDefault, NoForeignKey, NotNull, NotPrimaryKey, Null,
+  PrimaryKey, StringColumn, StringValue, TableBuilder,
 }
 
 pub fn get_column_name(column: Column(table)) -> String {
@@ -15,12 +15,12 @@ pub fn get_column(column: Column(table)) -> table {
   column.column
 }
 
-fn default_constraints() {
-  ColumnConstraint(NotNull, NoForeignKey, NoDefault)
+pub fn default_constraints() {
+  ColumnConstraint(NotNull, NoForeignKey, NoDefault, NotPrimaryKey)
 }
 
-fn id_constraints() {
-  ColumnConstraint(NotNull, NoForeignKey, NoDefault)
+pub fn id_constraints() {
+  ColumnConstraint(NotNull, NoForeignKey, NoDefault, PrimaryKey)
 }
 
 pub fn id_int(
@@ -156,9 +156,11 @@ pub fn references(to to_column: column) -> fn(Column(column)) -> Column(column) 
 }
 
 pub fn on_delete(
+  column_builder: fn(Column(table)) -> Column(table),
   cascade_rule cascade_rule: gleaky.CascadeRule(table),
 ) -> fn(Column(table)) -> Column(table) {
-  fn(column: Column(table)) {
+  fn(base_column: Column(table)) {
+    let column = column_builder(base_column)
     case column.constraints.foreign_key {
       gleaky.NoForeignKey -> Error(Nil)
       gleaky.ForeignKey(columns, _, on_update) ->
@@ -192,9 +194,11 @@ pub fn on_delete(
 }
 
 pub fn on_update(
+  column_builder: fn(Column(table)) -> Column(table),
   cascade_rule cascade_rule: gleaky.CascadeRule(table),
 ) -> fn(Column(table)) -> Column(table) {
-  fn(column: Column(table)) {
+  fn(base_column: Column(table)) {
+    let column = column_builder(base_column)
     case column.constraints.foreign_key {
       gleaky.NoForeignKey -> Error(Nil)
       gleaky.ForeignKey(columns, on_delete, _) ->
@@ -224,5 +228,21 @@ pub fn on_update(
       column.name,
       column.constraints,
     ))
+  }
+}
+
+pub fn primary_key(column: Column(column)) -> Column(column) {
+  case column {
+    StringColumn(_, _, constraints) ->
+      StringColumn(
+        ..column,
+        constraints: ColumnConstraint(..constraints, primary_key: PrimaryKey),
+      )
+    IntColumn(_, _, constraints) ->
+      IntColumn(
+        ..column,
+        constraints: ColumnConstraint(..constraints, primary_key: PrimaryKey),
+      )
+    InvalidColumn(_, _, _) -> column
   }
 }

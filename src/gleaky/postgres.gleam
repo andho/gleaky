@@ -72,11 +72,14 @@ fn transform_ddl_column(
     gleaky.Null -> " NULL"
     gleaky.NotNull -> " NOT NULL"
   })
-  |> string.append("")
-  |> string.append("")
+  |> string.append(case column.constraints.primary_key {
+    gleaky.PrimaryKey -> " PRIMARY KEY"
+    gleaky.NotPrimaryKey -> ""
+  })
 }
 
-fn transform_ddl_alter_column(
+@internal
+pub fn transform_ddl_alter_column(
   old_column: ddl.DDLColumn,
   new_column: ddl.DDLColumn,
   options: PgOptions,
@@ -85,6 +88,7 @@ fn transform_ddl_alter_column(
     transform_alter_data_type(old_column, new_column, options),
     transform_alter_default(old_column, new_column, options),
     transform_alter_nullable(old_column, new_column, options),
+    transform_alter_primary_key(old_column, new_column, options),
   ]
 }
 
@@ -107,6 +111,21 @@ fn transform_alter_default(
     gleaky.Default(_), gleaky.NoDefault ->
       Some(new_column.name <> " DROP DEFAULT")
     gleaky.NoDefault, gleaky.NoDefault -> None
+  }
+}
+
+fn transform_alter_primary_key(
+  old_column: ddl.DDLColumn,
+  new_column: ddl.DDLColumn,
+  _options: PgOptions,
+) -> Option(String) {
+  case old_column.constraints.primary_key, new_column.constraints.primary_key {
+    gleaky.PrimaryKey, gleaky.PrimaryKey
+    | gleaky.NotPrimaryKey, gleaky.NotPrimaryKey
+    -> None
+    gleaky.NotPrimaryKey, gleaky.PrimaryKey ->
+      Some("ADD CONSTRAINT pkey PRIMARY KEY")
+    gleaky.PrimaryKey, gleaky.NotPrimaryKey -> Some("DROP CONSTRAINT pkey")
   }
 }
 
