@@ -1,0 +1,59 @@
+---
+version: 1.2.6
+title: create table with foreign key 1
+file: ./test/ddl_test.gleam
+test_name: create_table_with_foreign_key_test
+---
+CreateTable(
+  "addresses",
+  [
+    DdlColumn(
+      "id",
+      TypeInt,
+      Collate("utf8"),
+      ColumnConstraint(
+        NotNull,
+        NoForeignKey,
+        NoDefault,
+      ),
+    ),
+    DdlColumn(
+      "street",
+      TypeString(None),
+      Collate("utf8"),
+      ColumnConstraint(
+        NotNull,
+        NoForeignKey,
+        Default(StringValue("Majeedhee Magu")),
+      ),
+    ),
+    DdlColumn(
+      "city",
+      TypeInt,
+      Collate("utf8"),
+      ColumnConstraint(
+        Null,
+        NoForeignKey,
+        NoDefault,
+      ),
+    ),
+    DdlColumn(
+      "customer_id",
+      TypeInt,
+      Collate("utf8"),
+      ColumnConstraint(
+        NotNull,
+        ForeignKey(
+          "customers",
+          ["id"],
+          OnDelete(Cascade),
+          OnUpdate(Cascade),
+        ),
+        NoDefault,
+      ),
+    ),
+  ],
+  [],
+  [],
+  [],
+)

@@ -1,4 +1,5 @@
 import birdie
+import example
 import pprint
 
 import gleaky/table
@@ -27,4 +28,10 @@ pub fn table1_test() {
   |> column.int(Age, name: "age", attributes: [column.null])
   |> pprint.format
   |> birdie.snap(title: "define table 1")
+}
+
+pub fn table_with_foreign_key_test() {
+  example.table2()
+  |> pprint.format
+  |> birdie.snap(title: "define table with foreign key 1")
 }

@@ -26,13 +26,18 @@ pub type DDLColumn {
 pub type ColumnConstraint {
   ColumnConstraint(
     nullable: gleaky.Nullable,
-    foreign_key: gleaky.ForeignKey(String),
+    foreign_key: DDLForeignKey,
     default: gleaky.Default,
   )
 }
 
 pub type DDLForeignKey {
-  ForeignKey(columns: List(String), on_delete: OnDelete, on_update: OnUpdate)
+  ForeignKey(
+    table: String,
+    columns: List(String),
+    on_delete: gleaky.OnDelete(String),
+    on_update: gleaky.OnUpdate(String),
+  )
   NoForeignKey
 }
 
@@ -139,22 +144,75 @@ pub type DDLQuery {
   Drop(DropTable)
 }
 
-pub fn create_table(table: Table(table)) -> CreateTable {
-  CreateTable(
-    name: table.name,
-    columns: list.map(table.columns, column_to_dql_column(table, _)),
-    attributes: [],
-    indexes: [],
-    constraints: [],
+pub type Schema(table) {
+  Schema(
+    tables: List(#(String, Table(table))),
+    column_map: dict.Dict(table, Column(table)),
+    column_to_table: dict.Dict(table, Table(table)),
   )
 }
 
-fn column_to_dql_column(table: Table(table), column: Column(table)) {
+pub fn create_schema(tables: List(Table(table))) {
+  let column_to_table =
+    list.flat_map(tables, fn(t) {
+      table.get_columns(t)
+      |> list.map(fn(column) { #(column.get_column(column), t) })
+    })
+    |> dict.from_list
+
+  let column_map =
+    list.flat_map(tables, fn(t) {
+      table.get_columns(t)
+      |> list.map(fn(column) { #(column.get_column(column), column) })
+    })
+    |> dict.from_list
+
+  let tables_dict = list.map(tables, fn(table) { #(table.name, table) })
+
+  Schema(tables: tables_dict, column_map:, column_to_table:)
+}
+
+pub fn get_column_from_schema(
+  schema: Schema(table),
+  column: table,
+) -> Result(Column(table), Nil) {
+  dict.get(schema.column_map, column)
+}
+
+pub fn get_table_from_column(
+  schema: Schema(table),
+  column: table,
+) -> Result(Table(table), Nil) {
+  dict.get(schema.column_to_table, column)
+}
+
+pub fn create_table(
+  schema: Schema(table),
+  table: Table(table),
+) -> Result(CreateTable, Nil) {
+  use table <- result.try(list.key_find(schema.tables, table.name))
+
+  Ok(
+    CreateTable(
+      name: table.name,
+      columns: list.map(table.columns, column_to_dql_column(schema, table, _)),
+      attributes: [],
+      indexes: [],
+      constraints: [],
+    ),
+  )
+}
+
+fn column_to_dql_column(
+  schema: Schema(table),
+  table: Table(table),
+  column: Column(table),
+) {
   DDLColumn(
     name: column.get_column_name(column),
     data_type: column_to_data_type(column),
     collate: Collate("utf8"),
-    constraints: column_to_constraints(table, column),
+    constraints: column_to_constraints(schema, table, column),
   )
 }
 
@@ -165,6 +223,7 @@ pub type DDLAlterColumn {
 }
 
 pub fn diff_table(
+  schema: Schema(table),
   created_table: CreateTable,
   new_table: Table(table),
 ) -> Result(AlterTable, Nil) {
@@ -183,8 +242,9 @@ pub fn diff_table(
 
       case created_column, new_column {
         Ok(created), Ok(new) ->
-          compare_columns(created, column_to_dql_column(new_table, new))
-        Error(_), Ok(new) -> Ok(AddColumn(column_to_dql_column(new_table, new)))
+          compare_columns(created, column_to_dql_column(schema, new_table, new))
+        Error(_), Ok(new) ->
+          Ok(AddColumn(column_to_dql_column(schema, new_table, new)))
         Ok(created), Error(_) -> Ok(DropColumn(created.name))
         Error(_), Error(_) -> Error(Nil)
       }
@@ -303,17 +363,23 @@ fn column_to_data_type(column: Column(table)) -> DataType {
 }
 
 fn column_to_constraints(
+  schema: Schema(table),
   table: Table(table),
   column: Column(table),
 ) -> ColumnConstraint {
   let foreign_key = case column.constraints.foreign_key {
-    gleaky.ForeignKey(columns, on_delete, on_update) ->
-      gleaky.ForeignKey(
-        columns: columns_to_string(table, columns),
-        on_delete: on_delete_to_ddl(table, on_delete),
-        on_update: on_update_to_ddl(table, on_update),
+    gleaky.ForeignKey(columns, on_delete, on_update) -> {
+      let assert Ok(first_column) = list.first(columns)
+      let assert Ok(referenced_table) =
+        get_table_from_column(schema, first_column)
+      ForeignKey(
+        table: referenced_table.name,
+        columns: columns_to_string(schema, table, columns),
+        on_delete: on_delete_to_ddl(schema, table, on_delete),
+        on_update: on_update_to_ddl(schema, table, on_update),
       )
-    gleaky.NoForeignKey -> gleaky.NoForeignKey
+    }
+    gleaky.NoForeignKey -> NoForeignKey
   }
   ColumnConstraint(
     nullable: column.constraints.nullable,
@@ -322,13 +388,14 @@ fn column_to_constraints(
   )
 }
 
-fn columns_to_string(table: Table(table), columns: List(table)) -> List(String) {
-  let cols =
-    table.get_columns(table)
-    |> list.map(fn(column) { #(column.get_column(column), column) })
-    |> dict.from_list
+fn columns_to_string(
+  schema: Schema(table),
+  table: Table(table),
+  columns: List(table),
+) -> List(String) {
   list.map(columns, fn(fq_col_name) {
-    use column <- result.try(dict.get(cols, fq_col_name))
+    //use column <- result.try(dict.get(cols, fq_col_name))
+    use column <- result.try(get_column_from_schema(schema, fq_col_name))
 
     Ok(column.get_column_name(column))
   })
@@ -337,36 +404,40 @@ fn columns_to_string(table: Table(table), columns: List(table)) -> List(String) 
 }
 
 fn cascade_rule_to_ddl(
+  schema: Schema(table),
   table: Table(table),
   cascade_rule: gleaky.CascadeRule(table),
 ) -> gleaky.CascadeRule(String) {
   case cascade_rule {
-    gleaky.SetNull(columns) -> gleaky.SetNull(columns_to_string(table, columns))
+    gleaky.SetNull(columns) ->
+      gleaky.SetNull(columns_to_string(schema, table, columns))
     gleaky.SetDefault(columns) ->
-      gleaky.SetDefault(columns_to_string(table, columns))
+      gleaky.SetDefault(columns_to_string(schema, table, columns))
     gleaky.Cascade -> gleaky.Cascade
     gleaky.Restrict -> gleaky.Restrict
   }
 }
 
 fn on_delete_to_ddl(
+  schema: Schema(table),
   table: Table(table),
   on_delete: gleaky.OnDelete(table),
 ) -> gleaky.OnDelete(String) {
   case on_delete {
     gleaky.OnDelete(cascade_rule) ->
-      gleaky.OnDelete(cascade_rule_to_ddl(table, cascade_rule))
+      gleaky.OnDelete(cascade_rule_to_ddl(schema, table, cascade_rule))
     gleaky.NoOnDelete -> gleaky.NoOnDelete
   }
 }
 
 fn on_update_to_ddl(
+  schema: Schema(table),
   table: Table(table),
   on_update: gleaky.OnUpdate(table),
 ) -> gleaky.OnUpdate(String) {
   case on_update {
     gleaky.OnUpdate(cascade_rule) ->
-      gleaky.OnUpdate(cascade_rule_to_ddl(table, cascade_rule))
+      gleaky.OnUpdate(cascade_rule_to_ddl(schema, table, cascade_rule))
     gleaky.NoOnUpdate -> gleaky.NoOnUpdate
   }
 }

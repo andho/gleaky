@@ -1,3 +1,4 @@
+import gleaky
 import gleaky/table
 import gleaky/table/column
 
@@ -12,6 +13,7 @@ pub type AddressColumns {
   AddressId
   Street
   City
+  AddressCustomer
 }
 
 pub type Tables {
@@ -36,6 +38,9 @@ pub fn table2() {
     column.default_string("Majeedhee Magu"),
   ])
   |> column.int(City, name: "city", attributes: [column.null])
+  |> column.int(AddressCustomer, name: "customer_id", attributes: [
+    column.references(Customer(CustomerId)),
+  ])
   |> table.create
 }
 
