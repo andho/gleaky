@@ -237,7 +237,7 @@ pub fn diff_table(
     list.unique(list.append(dict.keys(created_columns), dict.keys(new_columns)))
 
   let to_create =
-    list.filter_map(all_columns, fn(column) {
+    list.map(all_columns, fn(column) {
       let created_column = dict.get(created_columns, column)
       let new_column = dict.get(new_columns, column)
 
@@ -251,6 +251,18 @@ pub fn diff_table(
       }
     })
 
+  use <- bool.guard(
+    !list.any(to_create, fn(alter) {
+      case alter {
+        Ok(_) -> True
+        Error(_) -> False
+      }
+    }),
+    Error(Nil),
+  )
+
+  let to_create = list.filter_map(to_create, function.identity)
+
   Ok(
     AlterTable(
       name: new_table.name,
@@ -260,6 +272,38 @@ pub fn diff_table(
       constraints: [],
     ),
   )
+}
+
+pub fn validate_ddl_queries(
+  queries: List(DDLQuery),
+) -> Result(#(CreateTable, List(AlterTable)), Nil) {
+  use #(first, rest) <- result.try(case queries {
+    [] -> Error(Nil)
+    [first, ..rest] -> Ok(#(first, rest))
+  })
+  use create <- result.try(case first {
+    Create(create) -> Ok(create)
+    Alter(_) -> Error(Nil)
+    Drop(_) -> Error(Nil)
+  })
+
+  use alters <- result.try(
+    list.map(rest, fn(query) {
+      case query {
+        Create(_) -> Error(Nil)
+        Alter(alter) -> Ok(alter)
+        Drop(_) -> Error(Nil)
+      }
+    })
+    |> result.all,
+  )
+
+  Ok(#(create, alters))
+}
+
+pub fn merge_ddl_queries(queries: List(DDLQuery)) -> Result(CreateTable, Nil) {
+  use #(create, alters) <- result.try(validate_ddl_queries(queries))
+  Ok(merge_ddl(create, alters))
 }
 
 pub fn merge_ddl(create: CreateTable, queries: List(AlterTable)) {

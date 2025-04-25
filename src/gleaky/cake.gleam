@@ -22,6 +22,7 @@ pub fn cake_transformer() {
     not: w.not,
     and: w.and,
     or: w.or,
+    no_where: w.none,
     join: fn(table_name, where) {
       j.inner(j.table(table_name), on: where, alias: table_name)
     },

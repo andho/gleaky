@@ -28,6 +28,7 @@ pub type Transformer(table, sel_val, where_val, where, query, join) {
     not: fn(where) -> where,
     and: fn(List(where)) -> where,
     or: fn(List(where)) -> where,
+    no_where: fn() -> where,
     join: fn(String, where) -> join,
     compose: fn(String, List(sel_val), where, List(join)) -> query,
   )
@@ -143,7 +144,7 @@ fn transform_where(
       |> list.map(transform_where(_, get_sql_val, transformer))
       |> result.all
       |> result.map(fn(wheres) { transformer.or(wheres) })
-    where.NoWhere -> Ok(transformer.and([]))
+    where.NoWhere -> Ok(transformer.no_where())
   }
 }
 
