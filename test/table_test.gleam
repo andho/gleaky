@@ -1,5 +1,6 @@
 import birdie
 import example
+import gleeunit/should
 import pprint
 
 import gleaky/table
@@ -35,4 +36,9 @@ pub fn table_with_foreign_key_test() {
   example.table2()
   |> pprint.format
   |> birdie.snap(title: "define table with foreign key 1")
+}
+
+pub fn table_equality_test() {
+  { example.table1() == example.table1() }
+  |> should.be_true
 }

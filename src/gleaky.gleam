@@ -1,6 +1,3 @@
-import gleam/dict
-import gleam/option.{type Option}
-
 pub type Table(table) {
   Table(name: String, columns: List(Column(table)))
 }

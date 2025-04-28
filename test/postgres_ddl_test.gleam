@@ -1,5 +1,3 @@
-import gleam/option.{None, Some}
-
 import birdie
 import gleeunit/should
 import pprint
@@ -7,10 +5,8 @@ import pprint
 import gleaky
 import gleaky/ddl.{create_schema, create_table}
 import gleaky/postgres as pg
-import gleaky/table
-import gleaky/table/column
 
-import example.{Customer, Gender, Name, table1}
+import example.{table1}
 
 pub fn create_table_test() {
   let options = pg.PgOptions(default_collation: pg.EnUsUtf8, schema: "public")
@@ -67,7 +63,6 @@ pub fn drop_column_primary_key_test() {
         primary_key: gleaky.NotPrimaryKey,
       ),
     )
-  let alter_column = ddl.AlterColumn("id", column, new_column)
 
   pg.transform_ddl_alter_column(column, new_column, options)
   |> pprint.format
@@ -99,7 +94,6 @@ pub fn add_column_primary_key_test() {
         primary_key: gleaky.PrimaryKey,
       ),
     )
-  let alter_column = ddl.AlterColumn("id", column, new_column)
 
   pg.transform_ddl_alter_column(column, new_column, options)
   |> pprint.format

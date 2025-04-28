@@ -2,7 +2,7 @@ import gleam/bool
 import gleam/dict
 import gleam/function
 import gleam/list
-import gleam/option.{type Option, None, Some}
+import gleam/option.{type Option, None}
 import gleam/result
 
 import gleaky.{type Column, type Table}
@@ -436,7 +436,7 @@ fn column_to_constraints(
 
 fn columns_to_string(
   schema: Schema(table),
-  table: Table(table),
+  _table: Table(table),
   columns: List(table),
 ) -> List(String) {
   list.map(columns, fn(fq_col_name) {

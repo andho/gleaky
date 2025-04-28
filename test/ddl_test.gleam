@@ -2,12 +2,9 @@ import birdie
 import gleeunit/should
 import pprint
 
-import gleaky
 import gleaky/ddl.{create_schema, create_table}
-import gleaky/table
-import gleaky/table/column
 
-import example.{Customer, Gender, Name, table1}
+import example.{table1}
 
 pub fn create_table_test() {
   create_schema([table1()])
