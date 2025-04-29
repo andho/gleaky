@@ -16,6 +16,7 @@ CreateTable(
         NoForeignKey,
         NoDefault,
         PrimaryKey,
+        NotUnique,
       ),
     ),
     DdlColumn(
@@ -27,6 +28,7 @@ CreateTable(
         NoForeignKey,
         Default(StringValue("Jane Doe")),
         NotPrimaryKey,
+        NotUnique,
       ),
     ),
     DdlColumn(
@@ -38,6 +40,7 @@ CreateTable(
         NoForeignKey,
         NoDefault,
         NotPrimaryKey,
+        NotUnique,
       ),
     ),
   ],

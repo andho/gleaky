@@ -1,0 +1,17 @@
+---
+version: 1.2.6
+title: define unique column
+file: ./test/column_test.gleam
+test_name: unique_test
+---
+StringColumn(
+  Customer(Name),
+  "name",
+  ColumnConstraint(
+    NotNull,
+    NoForeignKey,
+    NoDefault,
+    NotPrimaryKey,
+    Unique,
+  ),
+)

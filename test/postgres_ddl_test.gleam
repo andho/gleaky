@@ -47,6 +47,7 @@ pub fn drop_column_primary_key_test() {
       ddl.NoForeignKey,
       gleaky.NoDefault,
       gleaky.PrimaryKey,
+      gleaky.NotUnique,
     )
   let column =
     ddl.DDLColumn(
@@ -78,6 +79,7 @@ pub fn add_column_primary_key_test() {
       ddl.NoForeignKey,
       gleaky.NoDefault,
       gleaky.NotPrimaryKey,
+      gleaky.NotUnique,
     )
   let column =
     ddl.DDLColumn(

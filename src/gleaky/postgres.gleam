@@ -59,7 +59,8 @@ fn transform_ddl_columns(
   <> "\n"
 }
 
-fn transform_ddl_column(
+@internal
+pub fn transform_ddl_column(
   column: ddl.DDLColumn,
   indent: String,
   options: PgOptions,
@@ -71,6 +72,10 @@ fn transform_ddl_column(
   |> string.append(case column.constraints.nullable {
     gleaky.Null -> " NULL"
     gleaky.NotNull -> " NOT NULL"
+  })
+  |> string.append(case column.constraints.unique {
+    gleaky.Unique -> " UNIQUE NULLS NOT DISTINCT"
+    gleaky.NotUnique -> ""
   })
   |> string.append(case column.constraints.primary_key {
     gleaky.PrimaryKey -> " PRIMARY KEY"

@@ -3,8 +3,8 @@ import gleam/result
 
 import gleaky.{
   type Column, type TableBuilder, ColumnConstraint, Default, IntColumn, IntValue,
-  InvalidColumn, NoDefault, NoForeignKey, NotNull, NotPrimaryKey, Null,
-  PrimaryKey, StringColumn, StringValue, TableBuilder,
+  InvalidColumn, NoDefault, NoForeignKey, NotNull, NotPrimaryKey, NotUnique,
+  Null, PrimaryKey, StringColumn, StringValue, TableBuilder, Unique,
 }
 
 pub fn get_column_name(column: Column(table)) -> String {
@@ -16,11 +16,11 @@ pub fn get_column(column: Column(table)) -> table {
 }
 
 pub fn default_constraints() {
-  ColumnConstraint(NotNull, NoForeignKey, NoDefault, NotPrimaryKey)
+  ColumnConstraint(NotNull, NoForeignKey, NoDefault, NotPrimaryKey, NotUnique)
 }
 
 pub fn id_constraints() {
-  ColumnConstraint(NotNull, NoForeignKey, NoDefault, PrimaryKey)
+  ColumnConstraint(NotNull, NoForeignKey, NoDefault, PrimaryKey, NotUnique)
 }
 
 pub fn id_int(
@@ -242,6 +242,22 @@ pub fn primary_key(column: Column(column)) -> Column(column) {
       IntColumn(
         ..column,
         constraints: ColumnConstraint(..constraints, primary_key: PrimaryKey),
+      )
+    InvalidColumn(_, _, _) -> column
+  }
+}
+
+pub fn unique(column: Column(column)) -> Column(column) {
+  case column {
+    StringColumn(_, _, constraints) ->
+      StringColumn(
+        ..column,
+        constraints: ColumnConstraint(..constraints, unique: Unique),
+      )
+    IntColumn(_, _, constraints) ->
+      IntColumn(
+        ..column,
+        constraints: ColumnConstraint(..constraints, unique: Unique),
       )
     InvalidColumn(_, _, _) -> column
   }

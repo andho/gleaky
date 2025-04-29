@@ -17,6 +17,7 @@ Query(
             NoForeignKey,
             Default(StringValue("Majeedhee Magu")),
             NotPrimaryKey,
+            NotUnique,
           ),
         ),
         IntColumn(
@@ -27,6 +28,7 @@ Query(
             NoForeignKey,
             NoDefault,
             NotPrimaryKey,
+            NotUnique,
           ),
         ),
       ],
@@ -42,6 +44,7 @@ Query(
             NoForeignKey,
             Default(StringValue("John Doe")),
             NotPrimaryKey,
+            NotUnique,
           ),
         ),
         IntColumn(
@@ -52,6 +55,7 @@ Query(
             NoForeignKey,
             NoDefault,
             NotPrimaryKey,
+            NotUnique,
           ),
         ),
       ],
@@ -71,6 +75,7 @@ Query(
               NoForeignKey,
               Default(StringValue("Majeedhee Magu")),
               NotPrimaryKey,
+              NotUnique,
             ),
           ),
           IntColumn(
@@ -81,6 +86,7 @@ Query(
               NoForeignKey,
               NoDefault,
               NotPrimaryKey,
+              NotUnique,
             ),
           ),
         ],

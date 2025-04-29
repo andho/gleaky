@@ -1,0 +1,18 @@
+---
+version: 1.2.6
+title: ddl column not unique column
+file: ./test/ddl_column_test.gleam
+test_name: ddl_column_not_unique_test
+---
+DdlColumn(
+  "name",
+  TypeString(None),
+  Collate("utf8"),
+  ColumnConstraint(
+    NotNull,
+    NoForeignKey,
+    NoDefault,
+    NotPrimaryKey,
+    NotUnique,
+  ),
+)

@@ -29,6 +29,7 @@ pub type ColumnConstraint {
     foreign_key: DDLForeignKey,
     default: gleaky.Default,
     primary_key: gleaky.PrimaryKey,
+    unique: gleaky.Unique,
   )
 }
 
@@ -196,7 +197,7 @@ pub fn create_table(
   Ok(
     CreateTable(
       name: table.name,
-      columns: list.map(table.columns, column_to_dql_column(schema, table, _)),
+      columns: list.map(table.columns, column_to_ddl_column(schema, table, _)),
       attributes: [],
       indexes: [],
       constraints: [],
@@ -204,7 +205,7 @@ pub fn create_table(
   )
 }
 
-fn column_to_dql_column(
+pub fn column_to_ddl_column(
   schema: Schema(table),
   table: Table(table),
   column: Column(table),
@@ -243,9 +244,9 @@ pub fn diff_table(
 
       case created_column, new_column {
         Ok(created), Ok(new) ->
-          compare_columns(created, column_to_dql_column(schema, new_table, new))
+          compare_columns(created, column_to_ddl_column(schema, new_table, new))
         Error(_), Ok(new) ->
-          Ok(AddColumn(column_to_dql_column(schema, new_table, new)))
+          Ok(AddColumn(column_to_ddl_column(schema, new_table, new)))
         Ok(created), Error(_) -> Ok(DropColumn(created.name))
         Error(_), Error(_) -> Error(Nil)
       }
@@ -431,6 +432,7 @@ fn column_to_constraints(
     foreign_key:,
     default: column.constraints.default,
     primary_key: column.constraints.primary_key,
+    unique: column.constraints.unique,
   )
 }
 

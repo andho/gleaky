@@ -19,6 +19,7 @@ Ok(AlterTable(
           NoForeignKey,
           Default(StringValue("John Doe")),
           NotPrimaryKey,
+          NotUnique,
         ),
       ),
       DdlColumn(
@@ -30,6 +31,7 @@ Ok(AlterTable(
           NoForeignKey,
           Default(StringValue("Jane Doe")),
           NotPrimaryKey,
+          NotUnique,
         ),
       ),
     ),
@@ -42,6 +44,7 @@ Ok(AlterTable(
         NoForeignKey,
         NoDefault,
         NotPrimaryKey,
+        NotUnique,
       ),
     )),
   ],

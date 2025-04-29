@@ -40,6 +40,7 @@ pub type ColumnConstraint(table) {
     foreign_key: ForeignKey(table),
     default: Default,
     primary_key: PrimaryKey,
+    unique: Unique,
   )
 }
 
@@ -47,6 +48,11 @@ pub type ColumnConstraint(table) {
 pub type PrimaryKey {
   PrimaryKey
   NotPrimaryKey
+}
+
+pub type Unique {
+  Unique
+  NotUnique
 }
 
 pub type Nullable {

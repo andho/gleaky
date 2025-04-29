@@ -15,6 +15,7 @@ Table(
         NoForeignKey,
         NoDefault,
         PrimaryKey,
+        NotUnique,
       ),
     ),
     StringColumn(
@@ -25,6 +26,7 @@ Table(
         NoForeignKey,
         Default(StringValue("Majeedhee Magu")),
         NotPrimaryKey,
+        NotUnique,
       ),
     ),
     IntColumn(
@@ -35,6 +37,7 @@ Table(
         NoForeignKey,
         NoDefault,
         NotPrimaryKey,
+        NotUnique,
       ),
     ),
     IntColumn(
@@ -49,6 +52,7 @@ Table(
         ),
         NoDefault,
         NotPrimaryKey,
+        NotUnique,
       ),
     ),
   ],
