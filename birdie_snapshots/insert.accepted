@@ -1,0 +1,64 @@
+---
+version: 1.2.6
+title: insert
+file: ./test/insert_test.gleam
+test_name: insert_test
+---
+Insert(
+  Table(
+    "customers",
+    [
+      Customer(CustomerId),
+      Customer(Name),
+      Customer(Age),
+    ],
+    dict.from_list([
+      #(
+        Customer(Age),
+        IntColumn(
+          Customer(Age),
+          "age",
+          ColumnConstraint(
+            Null,
+            NoForeignKey,
+            NoDefault,
+            NotPrimaryKey,
+            NotUnique,
+          ),
+        ),
+      ),
+      #(
+        Customer(CustomerId),
+        IntColumn(
+          Customer(CustomerId),
+          "id",
+          ColumnConstraint(
+            NotNull,
+            NoForeignKey,
+            NoDefault,
+            PrimaryKey,
+            NotUnique,
+          ),
+        ),
+      ),
+      #(
+        Customer(Name),
+        StringColumn(
+          Customer(Name),
+          "name",
+          ColumnConstraint(
+            NotNull,
+            NoForeignKey,
+            Default(StringValue("John Doe")),
+            NotPrimaryKey,
+            NotUnique,
+          ),
+        ),
+      ),
+    ]),
+  ),
+  [Customer(Age)],
+  ScalarValues([
+    ScalarValue(IntValue(1)),
+  ]),
+)

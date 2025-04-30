@@ -8,76 +8,10 @@ Query(
   [
     Table(
       "addresses",
-      [
-        StringColumn(
-          Address(Street),
-          "street",
-          ColumnConstraint(
-            NotNull,
-            NoForeignKey,
-            Default(StringValue("Majeedhee Magu")),
-            NotPrimaryKey,
-            NotUnique,
-          ),
-        ),
-        IntColumn(
+      [Address(Street), Address(City)],
+      dict.from_list([
+        #(
           Address(City),
-          "city",
-          ColumnConstraint(
-            Null,
-            NoForeignKey,
-            NoDefault,
-            NotPrimaryKey,
-            NotUnique,
-          ),
-        ),
-      ],
-    ),
-    Table(
-      "customers",
-      [
-        StringColumn(
-          Customer(Name),
-          "name",
-          ColumnConstraint(
-            NotNull,
-            NoForeignKey,
-            Default(StringValue("John Doe")),
-            NotPrimaryKey,
-            NotUnique,
-          ),
-        ),
-        IntColumn(
-          Customer(Age),
-          "age",
-          ColumnConstraint(
-            Null,
-            NoForeignKey,
-            NoDefault,
-            NotPrimaryKey,
-            NotUnique,
-          ),
-        ),
-      ],
-    ),
-  ],
-  [Customer(Name), Customer(Age)],
-  [
-    Join(
-      Table(
-        "addresses",
-        [
-          StringColumn(
-            Address(Street),
-            "street",
-            ColumnConstraint(
-              NotNull,
-              NoForeignKey,
-              Default(StringValue("Majeedhee Magu")),
-              NotPrimaryKey,
-              NotUnique,
-            ),
-          ),
           IntColumn(
             Address(City),
             "city",
@@ -89,7 +23,94 @@ Query(
               NotUnique,
             ),
           ),
-        ],
+        ),
+        #(
+          Address(Street),
+          StringColumn(
+            Address(Street),
+            "street",
+            ColumnConstraint(
+              NotNull,
+              NoForeignKey,
+              Default(StringValue("Majeedhee Magu")),
+              NotPrimaryKey,
+              NotUnique,
+            ),
+          ),
+        ),
+      ]),
+    ),
+    Table(
+      "customers",
+      [Customer(Name), Customer(Age)],
+      dict.from_list([
+        #(
+          Customer(Age),
+          IntColumn(
+            Customer(Age),
+            "age",
+            ColumnConstraint(
+              Null,
+              NoForeignKey,
+              NoDefault,
+              NotPrimaryKey,
+              NotUnique,
+            ),
+          ),
+        ),
+        #(
+          Customer(Name),
+          StringColumn(
+            Customer(Name),
+            "name",
+            ColumnConstraint(
+              NotNull,
+              NoForeignKey,
+              Default(StringValue("John Doe")),
+              NotPrimaryKey,
+              NotUnique,
+            ),
+          ),
+        ),
+      ]),
+    ),
+  ],
+  [Customer(Name), Customer(Age)],
+  [
+    Join(
+      Table(
+        "addresses",
+        [Address(Street), Address(City)],
+        dict.from_list([
+          #(
+            Address(City),
+            IntColumn(
+              Address(City),
+              "city",
+              ColumnConstraint(
+                Null,
+                NoForeignKey,
+                NoDefault,
+                NotPrimaryKey,
+                NotUnique,
+              ),
+            ),
+          ),
+          #(
+            Address(Street),
+            StringColumn(
+              Address(Street),
+              "street",
+              ColumnConstraint(
+                NotNull,
+                NoForeignKey,
+                Default(StringValue("Majeedhee Magu")),
+                NotPrimaryKey,
+                NotUnique,
+              ),
+            ),
+          ),
+        ]),
       ),
       WhereEquals(
         ColumnValue(Customer(Name)),

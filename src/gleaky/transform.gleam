@@ -48,15 +48,12 @@ pub fn transform(
   let table_col_map =
     list.flat_map(q.tables, fn(t) {
       table.get_columns(t)
-      |> list.map(fn(column) { #(column.get_column(column), t) })
+      |> list.map(fn(column) { #(column, t) })
     })
     |> dict.from_list
 
   let cols =
-    list.flat_map(q.tables, fn(t) {
-      table.get_columns(t)
-      |> list.map(fn(column) { #(column.get_column(column), column) })
-    })
+    list.flat_map(q.tables, fn(t) { table.get_column_map(t) |> dict.to_list })
     |> dict.from_list
 
   let get_column_name = get_column_name_(table_col_map, cols, _)

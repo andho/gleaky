@@ -6,28 +6,35 @@ test_name: table1_test
 ---
 Table(
   "customers",
-  [
-    StringColumn(
-      Customers(Name),
-      "name",
-      ColumnConstraint(
-        NotNull,
-        NoForeignKey,
-        Default(StringValue("John Doe")),
-        NotPrimaryKey,
-        NotUnique,
-      ),
-    ),
-    IntColumn(
+  [Customers(Name), Customers(Age)],
+  dict.from_list([
+    #(
       Customers(Age),
-      "age",
-      ColumnConstraint(
-        Null,
-        NoForeignKey,
-        NoDefault,
-        NotPrimaryKey,
-        NotUnique,
+      IntColumn(
+        Customers(Age),
+        "age",
+        ColumnConstraint(
+          Null,
+          NoForeignKey,
+          NoDefault,
+          NotPrimaryKey,
+          NotUnique,
+        ),
       ),
     ),
-  ],
+    #(
+      Customers(Name),
+      StringColumn(
+        Customers(Name),
+        "name",
+        ColumnConstraint(
+          NotNull,
+          NoForeignKey,
+          Default(StringValue("John Doe")),
+          NotPrimaryKey,
+          NotUnique,
+        ),
+      ),
+    ),
+  ]),
 )

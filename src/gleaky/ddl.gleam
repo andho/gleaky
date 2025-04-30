@@ -158,15 +158,12 @@ pub fn create_schema(tables: List(Table(table))) {
   let column_to_table =
     list.flat_map(tables, fn(t) {
       table.get_columns(t)
-      |> list.map(fn(column) { #(column.get_column(column), t) })
+      |> list.map(fn(column) { #(column, t) })
     })
     |> dict.from_list
 
   let column_map =
-    list.flat_map(tables, fn(t) {
-      table.get_columns(t)
-      |> list.map(fn(column) { #(column.get_column(column), column) })
-    })
+    list.flat_map(tables, fn(t) { table.get_column_map(t) |> dict.to_list })
     |> dict.from_list
 
   let tables_dict = list.map(tables, fn(table) { #(table.name, table) })
@@ -197,7 +194,10 @@ pub fn create_table(
   Ok(
     CreateTable(
       name: table.name,
-      columns: list.map(table.columns, column_to_ddl_column(schema, table, _)),
+      columns: list.map(table.get_columns(table), fn(column) {
+        let assert Ok(column) = table.get_column(table, column)
+        column_to_ddl_column(schema, table, column)
+      }),
       attributes: [],
       indexes: [],
       constraints: [],
@@ -391,8 +391,12 @@ fn get_column_dict(created_table: CreateTable) -> dict.Dict(String, DDLColumn) {
 fn get_new_column_dict(
   new_table: Table(table),
 ) -> dict.Dict(String, Column(table)) {
-  table.get_columns(new_table)
-  |> list.map(fn(column) { #(column.get_column_name(column), column) })
+  table.get_column_map(new_table)
+  |> dict.to_list
+  |> list.map(fn(column_tuple) {
+    let #(_, column_data) = column_tuple
+    #(column.get_column_name(column_data), column_data)
+  })
   |> dict.from_list
 }
 

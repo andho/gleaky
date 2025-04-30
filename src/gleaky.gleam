@@ -1,5 +1,12 @@
+import gleam/dict
+
+@internal
 pub type Table(table) {
-  Table(name: String, columns: List(Column(table)))
+  Table(
+    name: String,
+    columns: List(table),
+    column_map: dict.Dict(table, Column(table)),
+  )
 }
 
 pub type TableBuilder(table, column) {

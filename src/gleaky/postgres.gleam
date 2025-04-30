@@ -1,10 +1,14 @@
 import gleam/int
 import gleam/list
 import gleam/option.{type Option, None, Some}
+import gleam/result
 import gleam/string
 
 import gleaky
 import gleaky/ddl.{type DDLQuery, Alter, Create, Drop}
+import gleaky/insert
+import gleaky/table
+import gleaky/table/column
 
 pub type PgCollation {
   Default
@@ -187,6 +191,19 @@ fn transform_ddl_value(value: gleaky.SQLScalarValue) -> String {
   }
 }
 
+fn transform_sql_value(
+  table: gleaky.Table(table),
+  value: gleaky.SQLValue(table),
+) -> String {
+  case value {
+    gleaky.ColumnValue(column) -> {
+      let assert Ok(column) = table.get_column(table, column)
+      column.get_column_name(column)
+    }
+    gleaky.ScalarValue(scalar_val) -> transform_ddl_value(scalar_val)
+  }
+}
+
 fn transform_data_type(data_type: ddl.DataType, _options: PgOptions) -> String {
   case data_type {
     ddl.TypeString(None) -> "varchar"
@@ -216,4 +233,35 @@ fn transform_ddl_alter_columns(
 
 fn indent() -> String {
   "\t"
+}
+
+pub fn transform_insert(insert: insert.Insert(table)) -> Result(String, String) {
+  use columns <- result.try(
+    list.map(insert.columns, fn(column) {
+      table.get_column(insert.table, column)
+      |> result.map(column.get_column_name)
+    })
+    |> result.all
+    |> result.replace_error("Mismatched columns"),
+  )
+
+  Ok(
+    "INSERT INTO "
+    <> insert.table.name
+    <> " ("
+    <> {
+      columns
+      |> string.join(", ")
+    }
+    <> ") VALUES ("
+    <> {
+      case insert.values {
+        insert.ScalarValues(values) ->
+          list.map(values, transform_sql_value(insert.table, _))
+          |> string.join(", ")
+        insert.QueryValues(_query) -> "testing"
+      }
+    }
+    <> ");",
+  )
 }

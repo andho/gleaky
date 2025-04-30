@@ -1,0 +1,7 @@
+---
+version: 1.2.6
+title: postgres insert mismatch table column
+file: ./test/postgres_insert_test.gleam
+test_name: postgres_insert_table_mismatch_column_test
+---
+Error("Mismatched columns")
