@@ -1,3 +1,4 @@
+import gleam/dict
 import gleam/int
 import gleam/list
 import gleam/option.{type Option, None, Some}
@@ -9,6 +10,8 @@ import gleaky/ddl.{type DDLQuery, Alter, Create, Drop}
 import gleaky/insert
 import gleaky/table
 import gleaky/table/column
+import gleaky/update
+import gleaky/where
 
 pub type PgCollation {
   Default
@@ -264,4 +267,92 @@ pub fn transform_insert(insert: insert.Insert(table)) -> Result(String, String) 
     }
     <> ");",
   )
+}
+
+pub fn transform_update(update: update.Update(table)) -> Result(String, String) {
+  use set_string <- result.try(
+    update.set
+    |> dict.to_list
+    |> list.map(fn(column_tuple) {
+      let #(column, value) = column_tuple
+      use column_data <- result.try(
+        table.get_column(update.table, column)
+        |> result.replace_error("Invalid column"),
+      )
+      Ok(
+        column.get_column_name(column_data)
+        <> " = "
+        <> transform_sql_value(update.table, value),
+      )
+    })
+    |> result.all
+    |> result.map(fn(set) { set |> string.join(", ") }),
+  )
+
+  Ok(
+    "UPDATE "
+    <> table.get_name(update.table)
+    <> " SET "
+    <> set_string
+    <> transform_where(update.table, update.where),
+  )
+}
+
+pub fn transform_where(
+  table: gleaky.Table(table),
+  where: where.Where(table),
+) -> String {
+  case where {
+    where.NoWhere -> ""
+    _ -> " WHERE " <> transform_where_(table, where)
+  }
+}
+
+fn transform_where_(
+  table: gleaky.Table(table),
+  where: where.Where(table),
+) -> String {
+  case where {
+    where.NoWhere -> ""
+    where.WhereAnd(wheres) ->
+      wheres
+      |> list.map(transform_where_(table, _))
+      |> string.join(" AND ")
+    where.WhereOr(wheres) ->
+      wheres
+      |> list.map(transform_where_(table, _))
+      |> string.join(" OR ")
+    where.WhereNot(where) -> "NOT " <> transform_where_(table, where)
+    where.WhereEquals(value, to_value) ->
+      transform_sql_value(table, value)
+      <> " = "
+      <> transform_sql_value(table, to_value)
+    where.WhereGreaterThan(value, to_value) ->
+      transform_sql_value(table, value)
+      <> " > "
+      <> transform_sql_value(table, to_value)
+    where.WhereGreaterThanOrEquals(value, to_value) ->
+      transform_sql_value(table, value)
+      <> " >= "
+      <> transform_sql_value(table, to_value)
+    where.WhereLessThan(value, to_value) ->
+      transform_sql_value(table, value)
+      <> " < "
+      <> transform_sql_value(table, to_value)
+    where.WhereLessThanOrEquals(value, to_value) ->
+      transform_sql_value(table, value)
+      <> " <= "
+      <> transform_sql_value(table, to_value)
+    where.WhereIn(value, values) ->
+      transform_sql_value(table, value)
+      <> " IN ("
+      <> {
+        values
+        |> list.map(transform_sql_value(table, _))
+        |> string.join(", ")
+      }
+      <> ")"
+    where.WhereLike(value, like_value) ->
+      transform_sql_value(table, value) <> " LIKE " <> like_value
+  }
 }

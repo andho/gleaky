@@ -1,0 +1,67 @@
+---
+version: 1.2.6
+title: update
+file: ./test/update_test.gleam
+test_name: update_test
+---
+Update(
+  Table(
+    "customers",
+    [
+      Customer(CustomerId),
+      Customer(Name),
+      Customer(Age),
+    ],
+    dict.from_list([
+      #(
+        Customer(Age),
+        IntColumn(
+          Customer(Age),
+          "age",
+          ColumnConstraint(
+            Null,
+            NoForeignKey,
+            NoDefault,
+            NotPrimaryKey,
+            NotUnique,
+          ),
+        ),
+      ),
+      #(
+        Customer(CustomerId),
+        IntColumn(
+          Customer(CustomerId),
+          "id",
+          ColumnConstraint(
+            NotNull,
+            NoForeignKey,
+            NoDefault,
+            PrimaryKey,
+            NotUnique,
+          ),
+        ),
+      ),
+      #(
+        Customer(Name),
+        StringColumn(
+          Customer(Name),
+          "name",
+          ColumnConstraint(
+            NotNull,
+            NoForeignKey,
+            Default(StringValue("John Doe")),
+            NotPrimaryKey,
+            NotUnique,
+          ),
+        ),
+      ),
+    ]),
+  ),
+  dict.from_list([
+    #(
+      Customer(Age),
+      ScalarValue(IntValue(32)),
+    ),
+  ]),
+  NoWhere,
+)
