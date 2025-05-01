@@ -1,0 +1,7 @@
+---
+version: 1.2.6
+title: postgres ddl column with foreign key
+file: ./test/postgres_column_ddl_test.gleam
+test_name: postgres_ddl_column_foreign_key_test
+---
+"name varchar NOT NULL REFERENCES public.addresses (street) ON UPDATE CASCADE ON DELETE CASCADE"

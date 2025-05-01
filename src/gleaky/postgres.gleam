@@ -89,6 +89,66 @@ pub fn transform_ddl_column(
     gleaky.PrimaryKey -> " PRIMARY KEY"
     gleaky.NotPrimaryKey -> ""
   })
+  |> string.append(case column.constraints.foreign_key {
+    ddl.NoForeignKey -> ""
+    ddl.ForeignKey(table, columns, on_delete, on_update) ->
+      " REFERENCES "
+      <> transform_table_name(table, options)
+      <> " ("
+      <> {
+        columns
+        |> string.join(", ")
+      }
+      <> ")"
+      <> case on_update {
+        gleaky.OnUpdate(cascade_rule) ->
+          case cascade_rule {
+            gleaky.Cascade -> " ON UPDATE CASCADE"
+            gleaky.Restrict -> " ON UPDATE RESTRICT"
+            gleaky.SetNull(columns) ->
+              " ON UPDATE SET NULL ("
+              <> {
+                columns
+                |> list.map(transform_table_name(_, options))
+                |> string.join(", ")
+              }
+              <> ")"
+            gleaky.SetDefault(columns) ->
+              " ON UPDATE SET DEFAULT ("
+              <> {
+                columns
+                |> list.map(transform_table_name(_, options))
+                |> string.join(", ")
+              }
+              <> ")"
+          }
+        gleaky.NoOnUpdate -> ""
+      }
+      <> case on_delete {
+        gleaky.OnDelete(cascade_rule) ->
+          case cascade_rule {
+            gleaky.Cascade -> " ON DELETE CASCADE"
+            gleaky.Restrict -> " ON DELETE RESTRICT"
+            gleaky.SetNull(columns) ->
+              " ON DELETE SET NULL ("
+              <> {
+                columns
+                |> list.map(transform_table_name(_, options))
+                |> string.join(", ")
+              }
+              <> ")"
+            gleaky.SetDefault(columns) ->
+              " ON DELETE SET DEFAULT ("
+              <> {
+                columns
+                |> list.map(transform_table_name(_, options))
+                |> string.join(", ")
+              }
+              <> ")"
+          }
+        gleaky.NoOnDelete -> ""
+      }
+  })
 }
 
 @internal

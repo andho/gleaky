@@ -9,7 +9,7 @@ import example.{Age, Customer}
 pub fn insert_test() {
   insert.insert(example.table1())
   |> insert.columns([Customer(Age)])
-  |> insert.values(insert.ScalarValues([int(1)]))
+  |> insert.values([int(1)])
   |> pprint.format
   |> birdie.snap(title: "insert")
 }
