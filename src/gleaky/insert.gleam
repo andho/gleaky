@@ -23,7 +23,7 @@ pub fn columns(
 
 pub fn values(
   insert: Insert(table),
-  values values: InsertValues(table),
+  values values: List(SQLValue(table)),
 ) -> Insert(table) {
-  Insert(..insert, values: values)
+  Insert(..insert, values: ScalarValues(values))
 }
