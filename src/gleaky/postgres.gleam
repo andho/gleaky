@@ -7,6 +7,7 @@ import gleam/string
 
 import gleaky
 import gleaky/ddl.{type DDLQuery, Alter, Create, Drop}
+import gleaky/delete
 import gleaky/insert
 import gleaky/table
 import gleaky/table/column
@@ -295,6 +296,14 @@ pub fn transform_update(update: update.Update(table)) -> Result(String, String) 
     <> " SET "
     <> set_string
     <> transform_where(update.table, update.where),
+  )
+}
+
+pub fn transform_delete(delete: delete.Delete(table)) -> Result(String, String) {
+  Ok(
+    "DELETE FROM "
+    <> table.get_name(delete.table)
+    <> transform_where(delete.table, delete.where),
   )
 }
 

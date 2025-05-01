@@ -6,7 +6,7 @@ import gleaky/postgres as pg
 import gleaky/update
 import gleaky/where
 
-import example.{Address, Age, Customer, Name, Street}
+import example.{Age, Customer, Name}
 
 pub fn postgres_update_test() {
   update.update(example.table1())
