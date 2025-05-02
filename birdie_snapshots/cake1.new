@@ -1,0 +1,5 @@
+---
+version: 1.2.6
+title: cake1
+---
+Ok("SELECT customers.name, customers.age FROM customers ( addresses.street = 'Majeedhee Magu' AND customers.name = 'John' AND customers.age = 30 ) INNER JOIN addresses ON customers.name = addresses.street")
