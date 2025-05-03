@@ -1,5 +1,7 @@
 ---
-version: 1.2.6
+version: 1.2.7
 title: sql transformer
+file: ./test/sql_query_test.gleam
+test_name: query_test
 ---
 Ok("SELECT customers.name, customers.age FROM customers INNER JOIN addresses ON customers.name = addresses.street WHERE ( addresses.street = 'Majeedhee Magu' AND customers.name = 'John' AND customers.age = 30 )")

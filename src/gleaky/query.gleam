@@ -71,6 +71,10 @@ pub fn select(
   Query(..query, select: list.append(list.map(columns, from), query.select))
 }
 
+pub fn select_columns(query: Query(table), columns: List(table)) -> Query(table) {
+  Query(..query, select: list.append(columns, query.select))
+}
+
 pub fn join(
   query: Query(table),
   table table: Table(table),

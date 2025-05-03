@@ -1,5 +1,5 @@
 ---
-version: 1.2.6
+version: 1.2.7
 title: cake1
 file: ./test/cake_test.gleam
 test_name: query_test

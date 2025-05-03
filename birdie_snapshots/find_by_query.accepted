@@ -1,0 +1,7 @@
+---
+version: 1.2.7
+title: find_by query
+file: ./test/entity_test.gleam
+test_name: test_query
+---
+"SELECT customers.id, customers.name, customers.age FROM customers  WHERE customers.name = 'John Doe'"

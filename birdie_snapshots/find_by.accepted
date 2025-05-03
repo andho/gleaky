@@ -1,0 +1,7 @@
+---
+version: 1.2.7
+title: find_by
+file: ./test/entity_test.gleam
+test_name: entity_find_by_test
+---
+Ok(CustomerEntity("John Doe", 32))
