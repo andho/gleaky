@@ -1,7 +1,7 @@
 ---
 version: 1.2.7
-title: find_by
+title: find_by get_first
 file: ./test/entity_test.gleam
-test_name: entity_find_by_test
+test_name: entity_find_by_get_first_test
 ---
 Ok(CustomerEntity("John Doe", 32))

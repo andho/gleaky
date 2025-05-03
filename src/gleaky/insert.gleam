@@ -1,5 +1,6 @@
 import gleaky.{type SQLValue, type Table}
 import gleaky/query.{type Query}
+import gleam/list
 
 pub type Insert(table) {
   Insert(table: Table(table), columns: List(table), values: InsertValues(table))

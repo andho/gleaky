@@ -25,7 +25,32 @@ pub type Entity(
       query,
       join,
     ),
-    query: fn(query) -> Result(entity, Nil),
+    query: fn(query) -> Result(List(entity), Nil),
+  )
+}
+
+pub opaque type EntityQuery(
+  table,
+  transformer_table,
+  sel_val,
+  where_val,
+  where,
+  query,
+  join,
+  entity,
+) {
+  EntityQuery(
+    entity: Entity(
+      table,
+      transformer_table,
+      sel_val,
+      where_val,
+      where,
+      query,
+      join,
+      entity,
+    ),
+    query: query.Query(table),
   )
 }
 
@@ -42,10 +67,58 @@ pub fn find_by(
   ),
   column: table,
   value: SQLValue(table),
-) -> Result(entity, Nil) {
+) -> EntityQuery(
+  table,
+  transformer_table,
+  sel_val,
+  where_val,
+  where,
+  query,
+  join,
+  entity,
+) {
   query.query(entity.table)
   |> query.select_columns(table.get_columns(entity.table))
   |> query.where(where.equal(gleaky.column_value(column), value))
-  |> transform.transform(entity.transformer)
-  |> result.then(entity.query)
+  |> fn(query) { EntityQuery(entity:, query:) }
+}
+
+pub fn get_all(
+  entity_query: EntityQuery(
+    table,
+    transformer_table,
+    sel_val,
+    where_val,
+    where,
+    query,
+    join,
+    entity,
+  ),
+) -> Result(List(entity), Nil) {
+  entity_query.query
+  |> transform.transform(entity_query.entity.transformer)
+  |> result.then(entity_query.entity.query)
+}
+
+pub fn get_first(
+  entity_query: EntityQuery(
+    table,
+    transformer_table,
+    sel_val,
+    where_val,
+    where,
+    query,
+    join,
+    entity,
+  ),
+) -> Result(entity, Nil) {
+  entity_query.query
+  |> transform.transform(entity_query.entity.transformer)
+  |> result.then(entity_query.entity.query)
+  |> result.then(fn(entities) {
+    case entities {
+      [entity] -> Ok(entity)
+      _ -> Error(Nil)
+    }
+  })
 }

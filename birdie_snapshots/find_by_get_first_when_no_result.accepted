@@ -1,0 +1,7 @@
+---
+version: 1.2.7
+title: find_by get_first when no result
+file: ./test/entity_test.gleam
+test_name: entity_find_by_get_first_when_no_result_test
+---
+Error(Nil)
