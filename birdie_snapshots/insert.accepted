@@ -1,5 +1,5 @@
 ---
-version: 1.2.6
+version: 1.2.7
 title: insert
 file: ./test/insert_test.gleam
 test_name: insert_test
@@ -61,4 +61,5 @@ Insert(
   ScalarValues([
     ScalarValue(IntValue(1)),
   ]),
+  NotReturning,
 )

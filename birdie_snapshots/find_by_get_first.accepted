@@ -4,4 +4,4 @@ title: find_by get_first
 file: ./test/entity_test.gleam
 test_name: entity_find_by_get_first_test
 ---
-Ok(CustomerEntity("John Doe", 32))
+Ok(CustomerEntity(2, "John Doe", 32))

@@ -1,0 +1,7 @@
+---
+version: 1.2.7
+title: save entity
+file: ./test/entity_test.gleam
+test_name: save_entity_test
+---
+Ok(CustomerEntity(100, "John Doe", 32))

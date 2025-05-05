@@ -1,5 +1,6 @@
 import gleam/dict
 import gleam/list
+import gleam/result
 
 import gleaky.{type Column, type Table, type TableBuilder, Table, TableBuilder}
 import gleaky/table/column
@@ -42,4 +43,20 @@ pub fn get_column(
   column: table,
 ) -> Result(Column(table), Nil) {
   table.column_map |> dict.get(column)
+}
+
+pub fn get_primary_key(table: Table(table)) -> table {
+  let assert Ok(pk) =
+    table.column_map
+    |> dict.to_list
+    |> list.find(fn(column_tuple) {
+      let #(_, column_data) = column_tuple
+      case column_data.constraints.primary_key {
+        gleaky.PrimaryKey -> True
+        _ -> False
+      }
+    })
+    |> result.map(fn(column_tuple) { column_tuple.0 })
+
+  pk
 }

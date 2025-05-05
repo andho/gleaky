@@ -1,9 +1,14 @@
 import gleaky.{type SQLValue, type Table}
+import gleaky/insert
 import gleaky/query
 import gleaky/table
 import gleaky/transform
 import gleaky/where
+import gleam/dict
+import gleam/list
 import gleam/result
+
+import gleaky/dml
 
 pub type Entity(
   table,
@@ -26,6 +31,10 @@ pub type Entity(
       join,
     ),
     query: fn(query) -> Result(List(entity), Nil),
+    insert: fn(insert.Insert(table)) -> Result(gleaky.SQLScalarValue, Nil),
+    execute: fn(dml.DmlQuery(table)) -> Result(Int, Nil),
+    encoder: fn(entity) -> dict.Dict(table, gleaky.SQLScalarValue),
+    decoder: fn(dict.Dict(table, gleaky.SQLScalarValue)) -> Result(entity, Nil),
   )
 }
 
@@ -121,4 +130,44 @@ pub fn get_first(
       _ -> Error(Nil)
     }
   })
+}
+
+pub fn save(
+  entity_definition: Entity(
+    table,
+    transformer_table,
+    sel_val,
+    where_val,
+    where,
+    query,
+    join,
+    entity,
+  ),
+  entity: entity,
+) {
+  let entity_dict =
+    entity
+    |> entity_definition.encoder
+
+  let #(columns, values) =
+    entity_dict
+    |> dict.to_list
+    |> list.unzip
+
+  let pk = table.get_primary_key(entity_definition.table)
+
+  let result =
+    insert.insert(entity_definition.table)
+    |> insert.columns(columns)
+    |> insert.values(values |> list.map(gleaky.ScalarValue))
+    |> insert.returning([pk])
+    |> entity_definition.insert
+
+  case result {
+    Ok(pk_value) ->
+      entity_dict
+      |> dict.insert(pk, pk_value)
+      |> entity_definition.decoder
+    Error(Nil) -> Error(Nil)
+  }
 }

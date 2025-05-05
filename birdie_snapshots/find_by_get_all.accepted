@@ -4,4 +4,7 @@ title: find_by get_all
 file: ./test/entity_test.gleam
 test_name: entity_find_by_get_all_test
 ---
-Ok([CustomerEntity("John Doe", 32)])
+Ok([
+  CustomerEntity(2, "John Doe", 32),
+  CustomerEntity(3, "John Doe", 83),
+])

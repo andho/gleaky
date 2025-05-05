@@ -128,3 +128,17 @@ pub fn int(value: Int) -> SQLValue(table) {
 pub fn column_value(column: table) -> SQLValue(table) {
   ColumnValue(column)
 }
+
+pub fn to_int(value: SQLScalarValue) -> Result(Int, Nil) {
+  case value {
+    IntValue(int) -> Ok(int)
+    _ -> Error(Nil)
+  }
+}
+
+pub fn to_string(value: SQLScalarValue) -> Result(String, Nil) {
+  case value {
+    StringValue(str) -> Ok(str)
+    _ -> Error(Nil)
+  }
+}
