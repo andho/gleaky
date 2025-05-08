@@ -1,11 +1,10 @@
 import gleam/dict
-import gleam/dynamic/decode
 import gleam/result
 
 import birdie
 import pprint
 
-import gleaky.{int, string}
+import gleaky.{string}
 import gleaky/entity
 import gleaky/sql
 

@@ -172,7 +172,7 @@ pub fn save_new(
     join,
     entity,
   ),
-  entity: entity,
+  _entity: entity,
   entity_dict: dict.Dict(table, gleaky.SQLScalarValue),
   pk: table,
 ) {
