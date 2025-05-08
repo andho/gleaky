@@ -1,0 +1,74 @@
+---
+version: 1.2.7
+title: save existing entity query
+file: ./test/entity_test.gleam
+test_name: save_existing_entity_should_update_query_test
+---
+Update(Update(
+  Table(
+    "customers",
+    [
+      Customer(CustomerId),
+      Customer(Name),
+      Customer(Age),
+    ],
+    dict.from_list([
+      #(
+        Customer(Age),
+        IntColumn(
+          Customer(Age),
+          "age",
+          ColumnConstraint(
+            Null,
+            NoForeignKey,
+            NoDefault,
+            NotPrimaryKey,
+            NotUnique,
+          ),
+        ),
+      ),
+      #(
+        Customer(CustomerId),
+        IntColumn(
+          Customer(CustomerId),
+          "id",
+          ColumnConstraint(
+            NotNull,
+            NoForeignKey,
+            NoDefault,
+            PrimaryKey,
+            NotUnique,
+          ),
+        ),
+      ),
+      #(
+        Customer(Name),
+        StringColumn(
+          Customer(Name),
+          "name",
+          ColumnConstraint(
+            NotNull,
+            NoForeignKey,
+            Default(StringValue("John Doe")),
+            NotPrimaryKey,
+            NotUnique,
+          ),
+        ),
+      ),
+    ]),
+  ),
+  dict.from_list([
+    #(
+      Customer(Age),
+      ScalarValue(IntValue(32)),
+    ),
+    #(
+      Customer(Name),
+      ScalarValue(StringValue("Jane Doe")),
+    ),
+  ]),
+  WhereEquals(
+    ColumnValue(Customer(CustomerId)),
+    ScalarValue(IntValue(100)),
+  ),
+))

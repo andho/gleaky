@@ -161,14 +161,14 @@ pub fn save_entity_query_test() {
       table: example.table1(),
       transformer: sql.sql_transformer(),
       query: dummy_query,
-      execute: fn(query) {
+      execute: dummy_execute,
+      encoder: customer_encoder,
+      insert: fn(query) {
         query
         |> pprint.format
         |> birdie.snap(title: "save entity query")
-        Ok(1)
+        Ok(gleaky.IntValue(100))
       },
-      encoder: customer_encoder,
-      insert: dummy_insert,
       decoder: customer_entity_decoder,
     )
 
@@ -190,4 +190,24 @@ pub fn save_entity_test() {
   entity.save(entity, CustomerEntity(id: -1, name: "John Doe", age: 32))
   |> pprint.format
   |> birdie.snap(title: "save entity")
+}
+
+pub fn save_existing_entity_should_update_query_test() {
+  let entity =
+    entity.Entity(
+      table: example.table1(),
+      transformer: sql.sql_transformer(),
+      query: dummy_query,
+      execute: fn(query) {
+        query
+        |> pprint.format
+        |> birdie.snap(title: "save existing entity query")
+        Ok(1)
+      },
+      encoder: customer_encoder,
+      insert: dummy_insert,
+      decoder: customer_entity_decoder,
+    )
+
+  entity.save(entity, CustomerEntity(id: 100, name: "Jane Doe", age: 32))
 }

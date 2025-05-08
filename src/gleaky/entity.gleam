@@ -3,6 +3,7 @@ import gleaky/insert
 import gleaky/query
 import gleaky/table
 import gleaky/transform
+import gleaky/update
 import gleaky/where
 import gleam/dict
 import gleam/list
@@ -148,13 +149,42 @@ pub fn save(
   let entity_dict =
     entity
     |> entity_definition.encoder
+  let pk = table.get_primary_key(entity_definition.table)
 
+  use id_value <- result.try(entity_dict |> dict.get(pk))
+
+  case id_value {
+    gleaky.IntValue(id) if id < 0 ->
+      save_new(entity_definition, entity, entity_dict, pk)
+    _ -> save_existing(entity_definition, entity, entity_dict, pk)
+  }
+}
+
+pub fn save_new(
+  entity_definition: Entity(
+    table,
+    transformer_table,
+    sel_val,
+    where_val,
+    where,
+    query,
+    join,
+    entity,
+  ),
+  entity: entity,
+  entity_dict: dict.Dict(table, gleaky.SQLScalarValue),
+  pk: table,
+) {
   let #(columns, values) =
     entity_dict
     |> dict.to_list
+    |> list.filter(fn(column_tuple) {
+      case column_tuple.0 == pk {
+        True -> False
+        False -> True
+      }
+    })
     |> list.unzip
-
-  let pk = table.get_primary_key(entity_definition.table)
 
   let result =
     insert.insert(entity_definition.table)
@@ -169,5 +199,43 @@ pub fn save(
       |> dict.insert(pk, pk_value)
       |> entity_definition.decoder
     Error(Nil) -> Error(Nil)
+  }
+}
+
+fn save_existing(
+  entity_definition: Entity(
+    table,
+    transformer_table,
+    sel_val,
+    where_val,
+    where,
+    query,
+    join,
+    entity,
+  ),
+  entity: entity,
+  entity_dict: dict.Dict(table, gleaky.SQLScalarValue),
+  pk: table,
+) -> Result(entity, Nil) {
+  use pk_value <- result.try(dict.get(entity_dict, pk))
+  let result =
+    update.update(entity_definition.table)
+    |> list.fold(dict.to_list(entity_dict), _, fn(query, column_tuple) {
+      case column_tuple.0 == pk {
+        True -> query
+        False ->
+          update.set(query, column_tuple.0, gleaky.ScalarValue(column_tuple.1))
+      }
+    })
+    |> update.where(where.equal(
+      gleaky.column_value(pk),
+      gleaky.ScalarValue(pk_value),
+    ))
+    |> dml.Update
+    |> entity_definition.execute
+
+  case result {
+    Ok(_) -> Ok(entity)
+    _ -> Error(Nil)
   }
 }
