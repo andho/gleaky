@@ -7,21 +7,26 @@ test_name: entity_find_by_query_test
 EntityQuery(
   Entity(
     Table(
-      "customers",
+      "addresses",
       [
-        Customer(CustomerId),
-        Customer(Name),
-        Customer(Age),
+        Address(AddressId),
+        Address(Street),
+        Address(City),
+        Address(AddressCustomer),
       ],
       dict.from_list([
         #(
-          Customer(Age),
+          Address(AddressCustomer),
           IntColumn(
-            Customer(Age),
-            "age",
+            Address(AddressCustomer),
+            "customer_id",
             ColumnConstraint(
-              Null,
-              NoForeignKey,
+              NotNull,
+              ForeignKey(
+                [Customer(CustomerId)],
+                OnDelete(Restrict),
+                OnUpdate(Cascade),
+              ),
               NoDefault,
               NotPrimaryKey,
               NotUnique,
@@ -29,9 +34,9 @@ EntityQuery(
           ),
         ),
         #(
-          Customer(CustomerId),
+          Address(AddressId),
           IntColumn(
-            Customer(CustomerId),
+            Address(AddressId),
             "id",
             ColumnConstraint(
               NotNull,
@@ -43,14 +48,28 @@ EntityQuery(
           ),
         ),
         #(
-          Customer(Name),
+          Address(City),
+          IntColumn(
+            Address(City),
+            "city",
+            ColumnConstraint(
+              Null,
+              NoForeignKey,
+              NoDefault,
+              NotPrimaryKey,
+              NotUnique,
+            ),
+          ),
+        ),
+        #(
+          Address(Street),
           StringColumn(
-            Customer(Name),
-            "name",
+            Address(Street),
+            "street",
             ColumnConstraint(
               NotNull,
               NoForeignKey,
-              Default(StringValue("John Doe")),
+              Default(StringValue("Majeedhee Magu")),
               NotPrimaryKey,
               NotUnique,
             ),
@@ -87,21 +106,26 @@ EntityQuery(
   Query(
     [
       Table(
-        "customers",
+        "addresses",
         [
-          Customer(CustomerId),
-          Customer(Name),
-          Customer(Age),
+          Address(AddressId),
+          Address(Street),
+          Address(City),
+          Address(AddressCustomer),
         ],
         dict.from_list([
           #(
-            Customer(Age),
+            Address(AddressCustomer),
             IntColumn(
-              Customer(Age),
-              "age",
+              Address(AddressCustomer),
+              "customer_id",
               ColumnConstraint(
-                Null,
-                NoForeignKey,
+                NotNull,
+                ForeignKey(
+                  [Customer(CustomerId)],
+                  OnDelete(Restrict),
+                  OnUpdate(Cascade),
+                ),
                 NoDefault,
                 NotPrimaryKey,
                 NotUnique,
@@ -109,9 +133,9 @@ EntityQuery(
             ),
           ),
           #(
-            Customer(CustomerId),
+            Address(AddressId),
             IntColumn(
-              Customer(CustomerId),
+              Address(AddressId),
               "id",
               ColumnConstraint(
                 NotNull,
@@ -123,14 +147,28 @@ EntityQuery(
             ),
           ),
           #(
-            Customer(Name),
+            Address(City),
+            IntColumn(
+              Address(City),
+              "city",
+              ColumnConstraint(
+                Null,
+                NoForeignKey,
+                NoDefault,
+                NotPrimaryKey,
+                NotUnique,
+              ),
+            ),
+          ),
+          #(
+            Address(Street),
             StringColumn(
-              Customer(Name),
-              "name",
+              Address(Street),
+              "street",
               ColumnConstraint(
                 NotNull,
                 NoForeignKey,
-                Default(StringValue("John Doe")),
+                Default(StringValue("Majeedhee Magu")),
                 NotPrimaryKey,
                 NotUnique,
               ),
@@ -140,14 +178,15 @@ EntityQuery(
       ),
     ],
     [
-      Customer(CustomerId),
-      Customer(Name),
-      Customer(Age),
+      Address(AddressId),
+      Address(Street),
+      Address(City),
+      Address(AddressCustomer),
     ],
     [],
     WhereEquals(
-      ColumnValue(Customer(Name)),
-      ScalarValue(StringValue("John Doe")),
+      ColumnValue(Address(Street)),
+      ScalarValue(StringValue("Majeedhee Magu")),
     ),
     NotChecked,
   ),

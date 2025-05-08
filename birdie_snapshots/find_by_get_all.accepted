@@ -5,6 +5,16 @@ file: ./test/entity_test.gleam
 test_name: entity_find_by_get_all_test
 ---
 Ok([
-  CustomerEntity(2, "John Doe", 32),
-  CustomerEntity(3, "John Doe", 83),
+  AddressEntity(
+    2,
+    "Male'",
+    "Majeedhee Magu",
+    1,
+  ),
+  AddressEntity(
+    3,
+    "Male'",
+    "Majeedhee Magu",
+    1,
+  ),
 ])

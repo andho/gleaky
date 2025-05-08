@@ -6,21 +6,26 @@ test_name: save_existing_entity_should_update_query_test
 ---
 Update(Update(
   Table(
-    "customers",
+    "addresses",
     [
-      Customer(CustomerId),
-      Customer(Name),
-      Customer(Age),
+      Address(AddressId),
+      Address(Street),
+      Address(City),
+      Address(AddressCustomer),
     ],
     dict.from_list([
       #(
-        Customer(Age),
+        Address(AddressCustomer),
         IntColumn(
-          Customer(Age),
-          "age",
+          Address(AddressCustomer),
+          "customer_id",
           ColumnConstraint(
-            Null,
-            NoForeignKey,
+            NotNull,
+            ForeignKey(
+              [Customer(CustomerId)],
+              OnDelete(Restrict),
+              OnUpdate(Cascade),
+            ),
             NoDefault,
             NotPrimaryKey,
             NotUnique,
@@ -28,9 +33,9 @@ Update(Update(
         ),
       ),
       #(
-        Customer(CustomerId),
+        Address(AddressId),
         IntColumn(
-          Customer(CustomerId),
+          Address(AddressId),
           "id",
           ColumnConstraint(
             NotNull,
@@ -42,14 +47,28 @@ Update(Update(
         ),
       ),
       #(
-        Customer(Name),
+        Address(City),
+        IntColumn(
+          Address(City),
+          "city",
+          ColumnConstraint(
+            Null,
+            NoForeignKey,
+            NoDefault,
+            NotPrimaryKey,
+            NotUnique,
+          ),
+        ),
+      ),
+      #(
+        Address(Street),
         StringColumn(
-          Customer(Name),
-          "name",
+          Address(Street),
+          "street",
           ColumnConstraint(
             NotNull,
             NoForeignKey,
-            Default(StringValue("John Doe")),
+            Default(StringValue("Majeedhee Magu")),
             NotPrimaryKey,
             NotUnique,
           ),
@@ -59,16 +78,20 @@ Update(Update(
   ),
   dict.from_list([
     #(
-      Customer(Age),
-      ScalarValue(IntValue(32)),
+      Address(AddressCustomer),
+      ScalarValue(IntValue(1)),
     ),
     #(
-      Customer(Name),
-      ScalarValue(StringValue("Jane Doe")),
+      Address(City),
+      ScalarValue(StringValue("Male'")),
+    ),
+    #(
+      Address(Street),
+      ScalarValue(StringValue("Majeedhee Magu")),
     ),
   ]),
   WhereEquals(
-    ColumnValue(Customer(CustomerId)),
+    ColumnValue(Address(AddressId)),
     ScalarValue(IntValue(100)),
   ),
 ))

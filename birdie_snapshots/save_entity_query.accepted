@@ -6,21 +6,26 @@ test_name: save_entity_query_test
 ---
 Insert(
   Table(
-    "customers",
+    "addresses",
     [
-      Customer(CustomerId),
-      Customer(Name),
-      Customer(Age),
+      Address(AddressId),
+      Address(Street),
+      Address(City),
+      Address(AddressCustomer),
     ],
     dict.from_list([
       #(
-        Customer(Age),
+        Address(AddressCustomer),
         IntColumn(
-          Customer(Age),
-          "age",
+          Address(AddressCustomer),
+          "customer_id",
           ColumnConstraint(
-            Null,
-            NoForeignKey,
+            NotNull,
+            ForeignKey(
+              [Customer(CustomerId)],
+              OnDelete(Restrict),
+              OnUpdate(Cascade),
+            ),
             NoDefault,
             NotPrimaryKey,
             NotUnique,
@@ -28,9 +33,9 @@ Insert(
         ),
       ),
       #(
-        Customer(CustomerId),
+        Address(AddressId),
         IntColumn(
-          Customer(CustomerId),
+          Address(AddressId),
           "id",
           ColumnConstraint(
             NotNull,
@@ -42,14 +47,28 @@ Insert(
         ),
       ),
       #(
-        Customer(Name),
+        Address(City),
+        IntColumn(
+          Address(City),
+          "city",
+          ColumnConstraint(
+            Null,
+            NoForeignKey,
+            NoDefault,
+            NotPrimaryKey,
+            NotUnique,
+          ),
+        ),
+      ),
+      #(
+        Address(Street),
         StringColumn(
-          Customer(Name),
-          "name",
+          Address(Street),
+          "street",
           ColumnConstraint(
             NotNull,
             NoForeignKey,
-            Default(StringValue("John Doe")),
+            Default(StringValue("Majeedhee Magu")),
             NotPrimaryKey,
             NotUnique,
           ),
@@ -57,10 +76,15 @@ Insert(
       ),
     ]),
   ),
-  [Customer(Age), Customer(Name)],
+  [
+    Address(AddressCustomer),
+    Address(City),
+    Address(Street),
+  ],
   ScalarValues([
-    ScalarValue(IntValue(32)),
-    ScalarValue(StringValue("John Doe")),
+    ScalarValue(IntValue(1)),
+    ScalarValue(StringValue("Male'")),
+    ScalarValue(StringValue("Majeedhee Magu")),
   ]),
-  Returning([Customer(CustomerId)]),
+  Returning([Address(AddressId)]),
 )

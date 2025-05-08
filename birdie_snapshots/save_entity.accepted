@@ -4,4 +4,9 @@ title: save entity
 file: ./test/entity_test.gleam
 test_name: save_entity_test
 ---
-Ok(CustomerEntity(100, "John Doe", 32))
+Ok(AddressEntity(
+  100,
+  "Male'",
+  "Majeedhee Magu",
+  1,
+))
