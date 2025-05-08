@@ -1,4 +1,5 @@
 import gleaky.{type SQLValue, type Table}
+import gleaky/delete
 import gleaky/insert
 import gleaky/query
 import gleaky/table
@@ -236,6 +237,41 @@ fn save_existing(
 
   case result {
     Ok(_) -> Ok(entity)
+    _ -> Error(Nil)
+  }
+}
+
+pub fn delete(
+  entity_definition: Entity(
+    table,
+    transformer_table,
+    sel_val,
+    where_val,
+    where,
+    query,
+    join,
+    entity,
+  ),
+  entity: entity,
+) -> Result(Nil, Nil) {
+  let entity_dict =
+    entity
+    |> entity_definition.encoder
+  let pk = table.get_primary_key(entity_definition.table)
+
+  use pk_value <- result.try(dict.get(entity_dict, pk))
+
+  let result =
+    delete.delete(entity_definition.table)
+    |> delete.where(where.equal(
+      gleaky.column_value(pk),
+      gleaky.ScalarValue(pk_value),
+    ))
+    |> dml.Delete
+    |> entity_definition.execute
+
+  case result {
+    Ok(_) -> Ok(Nil)
     _ -> Error(Nil)
   }
 }

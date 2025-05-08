@@ -211,3 +211,23 @@ pub fn save_existing_entity_should_update_query_test() {
 
   entity.save(entity, CustomerEntity(id: 100, name: "Jane Doe", age: 32))
 }
+
+pub fn delete_entity_test() {
+  let entity =
+    entity.Entity(
+      table: example.table1(),
+      transformer: sql.sql_transformer(),
+      query: dummy_query,
+      execute: fn(query) {
+        query
+        |> pprint.format
+        |> birdie.snap(title: "delete entity query")
+        Ok(1)
+      },
+      encoder: customer_encoder,
+      insert: dummy_insert,
+      decoder: customer_entity_decoder,
+    )
+
+  entity.delete(entity, CustomerEntity(id: 100, name: "Jane Doe", age: 32))
+}
