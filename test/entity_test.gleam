@@ -92,12 +92,12 @@ fn customer_entity_decoder(
 
 fn dummy_query(_) {
   Ok([
-    AddressEntity(
-      id: 1,
-      street: "Majeedhee Magu",
-      city: "Male'",
-      customer_id: 1,
-    ),
+    dict.from_list([
+      #(Address(AddressId), Scalar(gleaky.IntValue(1))),
+      #(Address(Street), Scalar(gleaky.StringValue("Majeedhee Magu"))),
+      #(Address(City), Scalar(gleaky.StringValue("Male'"))),
+      #(Address(AddressCustomer), Scalar(gleaky.IntValue(1))),
+    ]),
   ])
 }
 
@@ -134,18 +134,18 @@ pub fn entity_find_by_get_all_test() {
       table: example.table2(),
       query: fn(_) {
         Ok([
-          AddressEntity(
+          address_encoder(AddressEntity(
             id: 2,
             street: "Majeedhee Magu",
             city: "Male'",
             customer_id: 1,
-          ),
-          AddressEntity(
+          )),
+          address_encoder(AddressEntity(
             id: 3,
             street: "Majeedhee Magu",
             city: "Male'",
             customer_id: 1,
-          ),
+          )),
         ])
       },
       execute: dummy_execute,
@@ -167,12 +167,12 @@ pub fn entity_find_by_get_first_test() {
       table: example.table2(),
       query: fn(_) {
         Ok([
-          AddressEntity(
+          address_encoder(AddressEntity(
             id: 2,
             street: "Majeedhee Magu",
             city: "Male'",
             customer_id: 1,
-          ),
+          )),
         ])
       },
       execute: dummy_execute,
@@ -212,18 +212,18 @@ pub fn entity_find_by_get_first_when_more_than_one_result_test() {
       table: example.table2(),
       query: fn(_) {
         Ok([
-          AddressEntity(
+          address_encoder(AddressEntity(
             id: 2,
             street: "Majeedhee Magu",
             city: "Male'",
             customer_id: 1,
-          ),
-          AddressEntity(
+          )),
+          address_encoder(AddressEntity(
             id: 3,
             street: "Majeedhee Magu",
             city: "Male'",
             customer_id: 1,
-          ),
+          )),
         ])
       },
       execute: dummy_execute,

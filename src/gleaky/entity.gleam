@@ -17,7 +17,7 @@ pub type Entity(table, entity) {
   Entity(
     schema: Schema(table),
     table: Table(table),
-    query: fn(query.Query(table)) -> Result(List(entity), Nil),
+    query: fn(query.Query(table)) -> Result(List(EntityFields(table)), Nil),
     insert: fn(insert.Insert(table)) -> Result(gleaky.SQLScalarValue, Nil),
     execute: fn(dml.DmlQuery(table)) -> Result(Int, Nil),
     encoder: fn(entity) -> EntityFields(table),
@@ -49,6 +49,11 @@ pub fn get_all(
 ) -> Result(List(entity), Nil) {
   entity_query.query
   |> entity_query.entity.query
+  |> result.then(fn(rows) {
+    rows
+    |> list.map(entity_query.entity.decoder)
+    |> result.all
+  })
 }
 
 pub fn get_first(
@@ -62,6 +67,7 @@ pub fn get_first(
       _ -> Error(Nil)
     }
   })
+  |> result.then(entity_query.entity.decoder)
 }
 
 pub fn save(entity_definition: Entity(table, entity), entity: entity) {
