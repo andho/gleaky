@@ -13,10 +13,17 @@ import gleaky/where
 
 import gleaky/dml
 
+pub type Relationship(table) {
+  One(pk: table, fk: table)
+  Many(pk: table, fk: table)
+  BelongsTo(pk: table, fk: table)
+}
+
 pub type Entity(table, entity) {
   Entity(
     schema: Schema(table),
     table: Table(table),
+    relationships: List(Relationship(table)),
     query: fn(query.Query(table)) -> Result(List(EntityFields(table)), Nil),
     insert: fn(insert.Insert(table)) -> Result(gleaky.SQLScalarValue, Nil),
     execute: fn(dml.DmlQuery(table)) -> Result(Int, Nil),
@@ -49,11 +56,159 @@ pub fn get_all(
 ) -> Result(List(entity), Nil) {
   entity_query.query
   |> entity_query.entity.query
+  |> result.then(populate_relationships(_, entity_query.entity))
   |> result.then(fn(rows) {
     rows
     |> list.map(entity_query.entity.decoder)
     |> result.all
   })
+}
+
+fn populate_relationships(
+  rows: List(EntityFields(table)),
+  entity_definition: Entity(table, entity),
+) -> Result(List(EntityFields(table)), Nil) {
+  populate_relationships_(
+    rows,
+    entity_definition,
+    entity_definition.relationships,
+  )
+}
+
+fn populate_relationships_(
+  rows: List(EntityFields(table)),
+  entity_definition: Entity(table, entity),
+  relationships: List(Relationship(table)),
+) -> Result(List(EntityFields(table)), Nil) {
+  case relationships {
+    [] -> Ok(rows)
+    [relationship, ..rest] ->
+      populate_relationship(rows, entity_definition, relationship)
+      |> result.then(populate_relationships_(_, entity_definition, rest))
+  }
+}
+
+fn populate_relationship(
+  rows: List(EntityFields(table)),
+  entity_definition: Entity(table, entity),
+  relationship: Relationship(table),
+) -> Result(List(EntityFields(table)), Nil) {
+  case relationship {
+    One(pk, fk) -> populate_one(rows, pk, fk, entity_definition)
+    Many(pk, fk) -> populate_many(rows, pk, fk, entity_definition)
+    BelongsTo(pk, fk) -> populate_belongs_to(rows, pk, fk, entity_definition)
+  }
+}
+
+fn populate_belongs_to(
+  rows: List(dict.Dict(table, Value(table))),
+  pk: table,
+  fk: table,
+  entity_definition: Entity(table, entity),
+) -> Result(List(dict.Dict(table, Value(table))), Nil) {
+  todo
+}
+
+fn populate_many(
+  rows: List(dict.Dict(table, Value(table))),
+  pk: table,
+  fk: table,
+  entity_definition: Entity(table, entity),
+) -> Result(List(dict.Dict(table, Value(table))), Nil) {
+  use pk_values <- result.try(
+    rows
+    |> list.map(dict.get(_, pk))
+    |> list.map(fn(value) {
+      case value {
+        Ok(Scalar(scalar)) -> Ok(gleaky.ScalarValue(scalar))
+        _ -> Error(Nil)
+      }
+    })
+    |> result.all,
+  )
+
+  use related_table <- result.try(ddl.get_table_from_column(
+    entity_definition.schema,
+    fk,
+  ))
+
+  let related_query =
+    query.query(related_table)
+    |> query.select_columns(table.get_columns(related_table))
+    |> query.where(where.in(gleaky.column_value(fk), pk_values))
+
+  use related_rows <- result.try(
+    related_query
+    |> entity_definition.query,
+  )
+
+  rows
+  |> list.map(fn(row) {
+    let relations =
+      list.filter(related_rows, fn(related_row) {
+        {
+          use related_pk <- result.try(dict.get(related_row, pk))
+          use fk_value <- result.try(dict.get(row, fk))
+          Ok(related_pk == fk_value)
+        }
+        |> result.unwrap(False)
+      })
+
+    Ok(dict.insert(row, fk, ManyRows(relations)))
+  })
+  |> result.all
+}
+
+fn populate_one(
+  rows: List(EntityFields(table)),
+  pk: table,
+  fk: table,
+  entity_definition: Entity(table, entity),
+) -> Result(List(EntityFields(table)), Nil) {
+  use fk_values <- result.try(
+    rows
+    |> list.map(dict.get(_, fk))
+    |> list.map(fn(value) {
+      case value {
+        Ok(Scalar(scalar)) -> Ok(gleaky.ScalarValue(scalar))
+        _ -> Error(Nil)
+      }
+    })
+    |> result.all,
+  )
+  echo fk_values
+
+  use related_table <- result.try(ddl.get_table_from_column(
+    entity_definition.schema,
+    pk,
+  ))
+
+  let related_query =
+    query.query(related_table)
+    |> query.select_columns(table.get_columns(related_table))
+    |> query.where(where.in(gleaky.column_value(pk), fk_values))
+
+  use related_rows <- result.try(
+    related_query
+    |> entity_definition.query,
+  )
+
+  rows
+  |> list.map(fn(row) {
+    use relation <- result.try(
+      list.find(related_rows, fn(related_row) {
+        {
+          use related_pk <- result.try(dict.get(related_row, pk))
+          use fk_value <- result.try(dict.get(row, fk))
+          Ok(related_pk == fk_value)
+        }
+        |> result.unwrap(False)
+      }),
+    )
+
+    Ok(dict.insert(row, fk, OneRow(relation)))
+  })
+  |> result.all
 }
 
 pub fn get_first(
@@ -198,8 +353,8 @@ pub type EntityFields(table) =
 
 pub type Value(table) {
   Scalar(gleaky.SQLScalarValue)
-  Many(List(EntityFields(table)))
-  One(EntityFields(table))
+  ManyRows(List(EntityFields(table)))
+  OneRow(EntityFields(table))
 }
 
 pub fn to_int(value: Value(table)) -> Result(Int, Nil) {

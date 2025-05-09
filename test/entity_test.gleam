@@ -6,7 +6,7 @@ import birdie
 import pprint
 
 import gleaky.{string}
-import gleaky/entity.{type EntityFields, Many, One, Scalar}
+import gleaky/entity.{type EntityFields, Many, ManyRows, One, OneRow, Scalar}
 import gleaky/sql
 
 import example.{
@@ -78,7 +78,7 @@ fn customer_entity_decoder(
     dict.get(row, Address(AddressId))
     |> result.then(fn(value) {
       case value {
-        Many(addresses) -> {
+        ManyRows(addresses) -> {
           addresses
           |> list.map(address_entity_decoder)
           |> result.all
@@ -88,6 +88,16 @@ fn customer_entity_decoder(
     }),
   )
   Ok(CustomerEntity(id:, name:, age:, addresses:))
+}
+
+fn customer_encoder(customer: CustomerEntity) -> EntityFields(example.Tables) {
+  let CustomerEntity(id:, name:, age:, addresses:) = customer
+  dict.from_list([
+    #(Customer(CustomerId), Scalar(gleaky.IntValue(id))),
+    #(Customer(Name), Scalar(gleaky.StringValue(name))),
+    #(Customer(Age), Scalar(gleaky.IntValue(age))),
+    #(Address(AddressCustomer), ManyRows(list.map(addresses, address_encoder))),
+  ])
 }
 
 fn dummy_query(_) {
@@ -114,6 +124,7 @@ pub fn entity_find_by_query_test() {
     entity.Entity(
       schema: example.schema(),
       table: example.table2(),
+      relationships: [],
       query: dummy_query,
       execute: dummy_execute,
       encoder: address_encoder,
@@ -132,6 +143,7 @@ pub fn entity_find_by_get_all_test() {
     entity.Entity(
       schema: example.schema(),
       table: example.table2(),
+      relationships: [],
       query: fn(_) {
         Ok([
           address_encoder(AddressEntity(
@@ -165,6 +177,7 @@ pub fn entity_find_by_get_first_test() {
     entity.Entity(
       schema: example.schema(),
       table: example.table2(),
+      relationships: [],
       query: fn(_) {
         Ok([
           address_encoder(AddressEntity(
@@ -192,6 +205,7 @@ pub fn entity_find_by_get_first_when_no_result_test() {
     entity.Entity(
       schema: example.schema(),
       table: example.table2(),
+      relationships: [],
       query: fn(_) { Ok([]) },
       execute: dummy_execute,
       encoder: address_encoder,
@@ -210,6 +224,7 @@ pub fn entity_find_by_get_first_when_more_than_one_result_test() {
     entity.Entity(
       schema: example.schema(),
       table: example.table2(),
+      relationships: [],
       query: fn(_) {
         Ok([
           address_encoder(AddressEntity(
@@ -243,6 +258,7 @@ pub fn save_entity_query_test() {
     entity.Entity(
       schema: example.schema(),
       table: example.table2(),
+      relationships: [],
       query: dummy_query,
       execute: dummy_execute,
       encoder: address_encoder,
@@ -271,6 +287,7 @@ pub fn save_entity_test() {
     entity.Entity(
       schema: example.schema(),
       table: example.table2(),
+      relationships: [],
       query: dummy_query,
       execute: dummy_execute,
       encoder: address_encoder,
@@ -296,6 +313,7 @@ pub fn save_existing_entity_should_update_query_test() {
     entity.Entity(
       schema: example.schema(),
       table: example.table2(),
+      relationships: [],
       query: dummy_query,
       execute: fn(query) {
         query
@@ -324,6 +342,7 @@ pub fn delete_entity_test() {
     entity.Entity(
       schema: example.schema(),
       table: example.table2(),
+      relationships: [],
       query: dummy_query,
       execute: fn(query) {
         query
@@ -346,45 +365,94 @@ pub fn delete_entity_test() {
     ),
   )
 }
-//pub fn save_entity_with_relationship_query_test() {
-//  let entity1 =
-//    entity.Entity(
-//schema: example.schema(),
-//      table: example.table1(),
-//      query: dummy_query,
-//      execute: dummy_execute,
-//      encoder: address_encoder,
-//      insert: fn(query) {
-//        query
-//        |> pprint.format
-//        |> birdie.snap(title: "save entity query")
-//        Ok(gleaky.IntValue(100))
-//      },
-//      decoder: address_entity_decoder,
-//    )
-//  let entity2 =
-//    entity.Entity(
-//      table: example.table2(),
-//      transformer: sql.sql_transformer(),
-//      query: dummy_query,
-//      execute: dummy_execute,
-//      encoder: address_encoder,
-//      insert: fn(query) {
-//        query
-//        |> pprint.format
-//        |> birdie.snap(title: "save entity query")
-//        Ok(gleaky.IntValue(100))
-//      },
-//      decoder: address_entity_decoder,
-//    )
-//
-//  entity.save(
-//    entity,
-//    AddressEntity(
-//      id: -1,
-//      street: "Majeedhee Magu",
-//      city: "Male'",
-//      customer_id: 1,
-//    ),
-//  )
-//}
+
+pub fn get_entity_with_relationship_test() {
+  let entity =
+    entity.Entity(
+      schema: example.schema(),
+      table: example.table1(),
+      relationships: [Many(Customer(CustomerId), Address(AddressCustomer))],
+      query: fn(query) {
+        let assert [table] = query.tables
+        case table == example.table1() {
+          True -> {
+            query
+            |> pprint.format
+            |> birdie.snap(
+              title: "get customer entity with one to one relatiohship query",
+            )
+
+            Ok([
+              dict.from_list([
+                #(Customer(CustomerId), Scalar(gleaky.IntValue(1))),
+                #(Customer(Name), Scalar(gleaky.StringValue("John Doe"))),
+                #(Customer(Age), Scalar(gleaky.IntValue(32))),
+              ]),
+            ])
+          }
+          False -> Error(Nil)
+        }
+      },
+      execute: dummy_execute,
+      encoder: customer_encoder,
+      insert: dummy_insert,
+      decoder: customer_entity_decoder,
+    )
+
+  entity.find_by(entity, Customer(CustomerId), gleaky.int(1))
+  |> entity.get_all
+}
+
+pub fn get_entity_with_relationship_address_query_test() {
+  let entity =
+    entity.Entity(
+      schema: example.schema(),
+      table: example.table1(),
+      relationships: [Many(Customer(CustomerId), Address(AddressCustomer))],
+      query: fn(query) {
+        let assert [table] = query.tables
+        case table == example.table1() {
+          True ->
+            Ok([
+              dict.from_list([
+                #(Customer(CustomerId), Scalar(gleaky.IntValue(1))),
+                #(Customer(Name), Scalar(gleaky.StringValue("John Doe"))),
+                #(Customer(Age), Scalar(gleaky.IntValue(32))),
+              ]),
+            ])
+          False -> Error(Nil)
+        }
+        |> result.try_recover(fn(_) {
+          case table == example.table2() {
+            True -> {
+              query
+              |> pprint.format
+              |> birdie.snap(
+                title: "get address entity with one to one relatiohship query",
+              )
+
+              Ok([
+                dict.from_list([
+                  #(Address(AddressId), Scalar(gleaky.IntValue(1))),
+                  #(
+                    Address(Street),
+                    Scalar(gleaky.StringValue("Majeedhee Magu")),
+                  ),
+                  #(Address(City), Scalar(gleaky.StringValue("Male'"))),
+                  #(Address(AddressCustomer), Scalar(gleaky.IntValue(1))),
+                ]),
+              ])
+            }
+            False -> Error(Nil)
+          }
+        })
+      },
+      execute: dummy_execute,
+      encoder: customer_encoder,
+      insert: dummy_insert,
+      decoder: customer_entity_decoder,
+    )
+
+  entity.find_by(entity, Customer(CustomerId), gleaky.int(1))
+  |> entity.get_all
+}

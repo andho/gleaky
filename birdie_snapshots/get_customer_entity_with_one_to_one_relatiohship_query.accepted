@@ -1,0 +1,73 @@
+---
+version: 1.2.7
+title: get customer entity with one to one relatiohship query
+file: ./test/entity_test.gleam
+test_name: get_entity_with_relationship_test
+---
+Query(
+  [
+    Table(
+      "customers",
+      [
+        Customer(CustomerId),
+        Customer(Name),
+        Customer(Age),
+      ],
+      dict.from_list([
+        #(
+          Customer(Age),
+          IntColumn(
+            Customer(Age),
+            "age",
+            ColumnConstraint(
+              Null,
+              NoForeignKey,
+              NoDefault,
+              NotPrimaryKey,
+              NotUnique,
+            ),
+          ),
+        ),
+        #(
+          Customer(CustomerId),
+          IntColumn(
+            Customer(CustomerId),
+            "id",
+            ColumnConstraint(
+              NotNull,
+              NoForeignKey,
+              NoDefault,
+              PrimaryKey,
+              NotUnique,
+            ),
+          ),
+        ),
+        #(
+          Customer(Name),
+          StringColumn(
+            Customer(Name),
+            "name",
+            ColumnConstraint(
+              NotNull,
+              NoForeignKey,
+              Default(StringValue("John Doe")),
+              NotPrimaryKey,
+              NotUnique,
+            ),
+          ),
+        ),
+      ]),
+    ),
+  ],
+  [
+    Customer(CustomerId),
+    Customer(Name),
+    Customer(Age),
+  ],
+  [],
+  WhereEquals(
+    ColumnValue(Customer(CustomerId)),
+    ScalarValue(IntValue(1)),
+  ),
+  NotChecked,
+)
