@@ -1,4 +1,5 @@
 import gleaky
+import gleaky/ddl
 import gleaky/table
 import gleaky/table/column
 
@@ -63,4 +64,8 @@ pub fn table1_alter_v1() {
   ])
   |> column.string(Gender, name: "gender", attributes: [])
   |> table.create
+}
+
+pub fn schema() {
+  ddl.create_schema([table1(), table2()])
 }

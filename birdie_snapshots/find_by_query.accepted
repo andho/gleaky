@@ -4,8 +4,8 @@ title: find_by query
 file: ./test/entity_test.gleam
 test_name: entity_find_by_query_test
 ---
-EntityQuery(
-  Entity(
+Query(
+  [
     Table(
       "addresses",
       [
@@ -77,117 +77,17 @@ EntityQuery(
         ),
       ]),
     ),
-    Transformer(
-      //fn(a) { ... },
-      //fn(a) { ... },
-      //fn(a) { ... },
-      //fn(a) { ... },
-      //fn(a) { ... },
-      //fn(a, b) { ... },
-      //fn(a, b) { ... },
-      //fn(a, b) { ... },
-      //fn(a, b) { ... },
-      //fn(a, b) { ... },
-      //fn(a, b) { ... },
-      //fn(a, b) { ... },
-      //fn(a) { ... },
-      //fn(a) { ... },
-      //fn(a) { ... },
-      //fn() { ... },
-      //fn(a, b) { ... },
-      //fn(a, b, c, d) { ... },
-    ),
-    //fn(a) { ... },
-    //fn(a) { ... },
-    //fn(a) { ... },
-    //fn(a) { ... },
-    //fn(a) { ... },
+  ],
+  [
+    Address(AddressId),
+    Address(Street),
+    Address(City),
+    Address(AddressCustomer),
+  ],
+  [],
+  WhereEquals(
+    ColumnValue(Address(Street)),
+    ScalarValue(StringValue("Majeedhee Magu")),
   ),
-  Query(
-    [
-      Table(
-        "addresses",
-        [
-          Address(AddressId),
-          Address(Street),
-          Address(City),
-          Address(AddressCustomer),
-        ],
-        dict.from_list([
-          #(
-            Address(AddressCustomer),
-            IntColumn(
-              Address(AddressCustomer),
-              "customer_id",
-              ColumnConstraint(
-                NotNull,
-                ForeignKey(
-                  [Customer(CustomerId)],
-                  OnDelete(Restrict),
-                  OnUpdate(Cascade),
-                ),
-                NoDefault,
-                NotPrimaryKey,
-                NotUnique,
-              ),
-            ),
-          ),
-          #(
-            Address(AddressId),
-            IntColumn(
-              Address(AddressId),
-              "id",
-              ColumnConstraint(
-                NotNull,
-                NoForeignKey,
-                NoDefault,
-                PrimaryKey,
-                NotUnique,
-              ),
-            ),
-          ),
-          #(
-            Address(City),
-            IntColumn(
-              Address(City),
-              "city",
-              ColumnConstraint(
-                Null,
-                NoForeignKey,
-                NoDefault,
-                NotPrimaryKey,
-                NotUnique,
-              ),
-            ),
-          ),
-          #(
-            Address(Street),
-            StringColumn(
-              Address(Street),
-              "street",
-              ColumnConstraint(
-                NotNull,
-                NoForeignKey,
-                Default(StringValue("Majeedhee Magu")),
-                NotPrimaryKey,
-                NotUnique,
-              ),
-            ),
-          ),
-        ]),
-      ),
-    ],
-    [
-      Address(AddressId),
-      Address(Street),
-      Address(City),
-      Address(AddressCustomer),
-    ],
-    [],
-    WhereEquals(
-      ColumnValue(Address(Street)),
-      ScalarValue(StringValue("Majeedhee Magu")),
-    ),
-    NotChecked,
-  ),
+  NotChecked,
 )
